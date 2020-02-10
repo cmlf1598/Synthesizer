@@ -842,6 +842,7 @@ bool PluginCore::initPluginDescriptors()
     // --- AU
     apiSpecificInfo.auBundleID = kAUBundleID;
 	apiSpecificInfo.auBundleName = kAUBundleName;
+	apiSpecificInfo.auBundleName = kAUBundleName;
 	apiSpecificInfo.auBundleName = kAUBundleName;   /* MacOS only: this MUST match the bundle identifier in your info.plist file */
     apiSpecificInfo.auBundleName = kAUBundleName;
 
@@ -882,7 +883,26 @@ void PluginCore::cook_frequency()
 	b2_osc = 1.0;
 
 	//set initial conditions
-	y_z1_osc = sin(-1.0 * wT);	// sin(w(-1)T)
-	y_z2_osc = sin(-2.0 * wT);	// sin(w(-2)T)
+	//y_z1_osc = sin(-1.0 * wT);	// sin(w(-1)T)
+	//y_z2_osc = sin(-2.0 * wT);	// sin(w(-2)T)
+
+	//re calculate new initial conditions
+	double wnT1 = asin(y_z1_osc);
+	//find n
+	double n = wnT1 / wT;
+
+	//asin will only return values from -pi/2 to pi/2 
+	//(a sine wave in this range only includes a rising edge)
+	//If we are on a rising edge, use the value 1T behind. 
+	//On the other hand, on a falling edge the value 1T ahead is
+	//equivalent to the 1T behind.
+	if (y_z1_osc > y_z2_osc)
+		n -= 1;
+	else
+		n += 1;
+
+	//calculate the new sample
+	y_z2_osc = sin((n)*wT);
 }
+
 

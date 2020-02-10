@@ -267,7 +267,7 @@ bool PluginCore::preProcessAudioBuffers(ProcessBufferInfo& processInfo)
     //     want to use the auto-variable-binding
     syncInBoundVariables();
 
-	cook_frequency();
+	//cook_frequency();
 
     return true;
 }
@@ -324,89 +324,79 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 	// --- Synth Plugin:
 	// --- Synth Plugin --- remove for FX plugins
 
-	//if (getPluginType() == kSynthPlugin)
-	//{
-	//	// --- output silence: change this with your signal render code
-
-	//	if (start_osc_gui == 0) 
-	//	{
-	//		processFrameInfo.audioOutputFrame[0] = 0.25;
-	//		if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
-	//			processFrameInfo.audioOutputFrame[1] = 0.25;
-
-	//		return true;	/// processed
-	//	}
-	//}
-
-	if (start_osc_gui == 0) 
+	if (getPluginType() == kSynthPlugin)
 	{
-		processFrameInfo.audioOutputFrame[0] = 0.25;
-		if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
-			processFrameInfo.audioOutputFrame[1] = 0.25;
+		// --- output silence: change this with your signal render code
+		if (start_osc_gui == 0) 
+		{
+			processFrameInfo.audioOutputFrame[0] = 0.0;
+			if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
+				processFrameInfo.audioOutputFrame[1] = 0.0;
 
-		return true;	/// processed
+			return true;	/// processed
+		}
+
+		//Oscillator
+		yn_osc = -b1_osc * y_z1_osc - b2_osc * y_z2_osc;
+
+		processFrameInfo.audioOutputFrame[0] = master_volume_left*yn_osc;
+		if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
+			processFrameInfo.audioOutputFrame[1] = master_volume_right*yn_osc;
+
+		//update oscillator memory blocks
+		y_z2_osc = y_z1_osc;
+		y_z1_osc = yn_osc;
 	}
 
 
-	//Oscillator
-	//do the difference equation
-	//yn_osc = -b1_osc * y_z1_osc - b2_osc * y_z2_osc;
-	yn_osc = 0.75;
+
+	
 
     // --- FX Plugin:
     if(processFrameInfo.channelIOConfig.inputChannelFormat == kCFMono &&
        processFrameInfo.channelIOConfig.outputChannelFormat == kCFMono)
     {
 		// --- pass through code: change this with your signal processing
-		//yn_osc = 0.75;
-		
-		////Feed-Forward Filter 
 
-		//if (compareEnumToInt(filter_selection_guiEnum::FF_Filter, filter_selection_gui)) 
-		//{
-		//	// Input sample is x(n)
-		//	//xn_left_ff_filter = processFrameInfo.audioInputFrame[0];
-		//	xn_left_ff_filter = yn_osc;
+		//Feed-Forward Filter 
 
-		//	//Delay sample is x(n - 1)
-		//	xn_1_left_ff_filter = z1_left_ff_filter;
+		if (compareEnumToInt(filter_selection_guiEnum::FF_Filter, filter_selection_gui)) 
+		{
+			// Input sample is x(n)
+			xn_left_ff_filter = processFrameInfo.audioInputFrame[0];
 
-		//	//Difference Equation
-		//	yn_left_ff_filter = a0_left_ff_filter * xn_left_ff_filter + a1_left_ff_filter * xn_1_left_ff_filter;
+			//Delay sample is x(n - 1)
+			xn_1_left_ff_filter = z1_left_ff_filter;
 
-		//	//Delay with current x(n)
-		//	z1_left_ff_filter = xn_left_ff_filter;
+			//Difference Equation
+			yn_left_ff_filter = a0_left_ff_filter * xn_left_ff_filter + a1_left_ff_filter * xn_1_left_ff_filter;
 
-		//	//Output sample is y(n)
-		//	processFrameInfo.audioOutputFrame[0] = yn_left_ff_filter * master_volume_left;
-		//}
+			//Delay with current x(n)
+			z1_left_ff_filter = xn_left_ff_filter;
 
-		////Feed-back Filter 
+			//Output sample is y(n)
+			processFrameInfo.audioOutputFrame[0] = yn_left_ff_filter * master_volume_left;
+		}
 
-		//if (compareEnumToInt(filter_selection_guiEnum::FB_Filter, filter_selection_gui))
-		//{
-		//	// Input sample is x(n)
-		//	//xn_left_fb_filter = processFrameInfo.audioInputFrame[0];
-		//	xn_left_fb_filter = yn_osc;
+		//Feed-back Filter 
 
-		//	//Delay sample is y(n - 1)
-		//	yn_1_left_fb_filter = z1_left_fb_filter;
+		if (compareEnumToInt(filter_selection_guiEnum::FB_Filter, filter_selection_gui))
+		{
+			// Input sample is x(n)
+			xn_left_fb_filter = processFrameInfo.audioInputFrame[0];
 
-		//	//Difference Equation
-		//	yn_left_fb_filter = a0_left_fb_filter * xn_left_fb_filter - b1_left_fb_filter * yn_1_left_fb_filter;
+			//Delay sample is y(n - 1)
+			yn_1_left_fb_filter = z1_left_fb_filter;
 
-		//	//Delay with current y(n)
-		//	z1_left_fb_filter = yn_left_fb_filter;
+			//Difference Equation
+			yn_left_fb_filter = a0_left_fb_filter * xn_left_fb_filter - b1_left_fb_filter * yn_1_left_fb_filter;
 
-		//	//Output sample is y(n)
-		//	processFrameInfo.audioOutputFrame[0] = yn_left_fb_filter * master_volume_left;
-		//}
+			//Delay with current y(n)
+			z1_left_fb_filter = yn_left_fb_filter;
 
-		//processFrameInfo.audioOutputFrame[0] = yn_osc * master_volume_left;
-		processFrameInfo.audioOutputFrame[0] = 0.75 * master_volume_left;
-
-		y_z2_osc = y_z1_osc;
-		y_z1_osc = yn_osc;
+			//Output sample is y(n)
+			processFrameInfo.audioOutputFrame[0] = yn_left_fb_filter * master_volume_left;
+		}
 
         return true; /// processed
     }
@@ -416,58 +406,50 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
        processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
     {
 		// --- pass through code: change this with your signal processing
-		//yn_osc = 0.75;
+
 		//Feed-Forward Filter 
 
-		//if (compareEnumToInt(filter_selection_guiEnum::FF_Filter, filter_selection_gui))
-		//{
-		//	// Input sample is x(n)
-		//	//xn_left_ff_filter = processFrameInfo.audioInputFrame[0];
-		//	xn_left_ff_filter = yn_osc;
+		if (compareEnumToInt(filter_selection_guiEnum::FF_Filter, filter_selection_gui))
+		{
+			// Input sample is x(n)
+			xn_left_ff_filter = processFrameInfo.audioInputFrame[0];
 
-		//	//Delay sample is x(n - 1)
-		//	xn_1_left_ff_filter = z1_left_ff_filter;
+			//Delay sample is x(n - 1)
+			xn_1_left_ff_filter = z1_left_ff_filter;
 
-		//	//Difference Equation
-		//	yn_left_ff_filter = a0_left_ff_filter * xn_left_ff_filter + a1_left_ff_filter * xn_1_left_ff_filter;
+			//Difference Equation
+			yn_left_ff_filter = a0_left_ff_filter * xn_left_ff_filter + a1_left_ff_filter * xn_1_left_ff_filter;
 
-		//	//Delay with current x(n)
-		//	z1_left_ff_filter = xn_left_ff_filter;
+			//Delay with current x(n)
+			z1_left_ff_filter = xn_left_ff_filter;
 
-		//	//Output sample is y(n)
-		//	yn_right_ff_filter = yn_left_ff_filter;
-		//	processFrameInfo.audioOutputFrame[0] = yn_left_ff_filter * master_volume_left;
-		//	processFrameInfo.audioOutputFrame[1] = yn_right_ff_filter * master_volume_right;
-		//}
+			//Output sample is y(n)
+			yn_right_ff_filter = yn_left_ff_filter;
+			processFrameInfo.audioOutputFrame[0] = yn_left_ff_filter * master_volume_left;
+			processFrameInfo.audioOutputFrame[1] = yn_right_ff_filter * master_volume_right;
+		}
 
-		////Feed-back Filter 
+		//Feed-back Filter 
 
-		//if (compareEnumToInt(filter_selection_guiEnum::FB_Filter, filter_selection_gui))
-		//{
-		//	// Input sample is x(n)
-		//	//xn_left_fb_filter = processFrameInfo.audioInputFrame[0];
-		//	xn_left_fb_filter = yn_osc;
+		if (compareEnumToInt(filter_selection_guiEnum::FB_Filter, filter_selection_gui))
+		{
+			// Input sample is x(n)
+			xn_left_fb_filter = processFrameInfo.audioInputFrame[0];
 
-		//	//Delay sample is y(n - 1)
-		//	yn_1_left_fb_filter = z1_left_fb_filter;
+			//Delay sample is y(n - 1)
+			yn_1_left_fb_filter = z1_left_fb_filter;
 
-		//	//Difference Equation
-		//	yn_left_fb_filter = a0_left_fb_filter * xn_left_fb_filter - b1_left_fb_filter * yn_1_left_fb_filter;
+			//Difference Equation
+			yn_left_fb_filter = a0_left_fb_filter * xn_left_fb_filter - b1_left_fb_filter * yn_1_left_fb_filter;
 
-		//	//Delay with current y(n)
-		//	z1_left_fb_filter = yn_left_fb_filter;
+			//Delay with current y(n)
+			z1_left_fb_filter = yn_left_fb_filter;
 
-		//	//Output sample is y(n)
-		//	yn_right_fb_filter = yn_left_fb_filter;
-		//	processFrameInfo.audioOutputFrame[0] = yn_left_fb_filter * master_volume_left;
-		//	processFrameInfo.audioOutputFrame[1] = yn_right_fb_filter * master_volume_right;
-		//}
-
-		processFrameInfo.audioOutputFrame[0] = 0.75 * master_volume_left;
-		processFrameInfo.audioOutputFrame[1] = 0.75 * master_volume_right;
-		
-		y_z2_osc = y_z1_osc;
-		y_z1_osc = yn_osc;
+			//Output sample is y(n)
+			yn_right_fb_filter = yn_left_fb_filter;
+			processFrameInfo.audioOutputFrame[0] = yn_left_fb_filter * master_volume_left;
+			processFrameInfo.audioOutputFrame[1] = yn_right_fb_filter * master_volume_right;
+		}
 
 		return true; /// processed
     }
@@ -477,72 +459,57 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
        processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
     {
 		// --- pass through code: change this with your signal processing
-		yn_osc = 0.75;
+
 		//Feed-Forward Filter 
 
-		//if (compareEnumToInt(filter_selection_guiEnum::FF_Filter, filter_selection_gui))
-		//{
-		//	// Input sample is x(n)
-		//	//xn_left_ff_filter = processFrameInfo.audioInputFrame[0];
-		//	//xn_right_ff_filter = processFrameInfo.audioInputFrame[1];
-		//	xn_left_ff_filter = yn_osc;
-		//	xn_right_ff_filter = yn_osc;
+		if (compareEnumToInt(filter_selection_guiEnum::FF_Filter, filter_selection_gui))
+		{
+			// Input sample is x(n)
+			xn_left_ff_filter = processFrameInfo.audioInputFrame[0];
+			xn_right_ff_filter = processFrameInfo.audioInputFrame[1];
 
-		//	//Delay sample is x(n - 1)
-		//	xn_1_left_ff_filter = z1_left_ff_filter;
-		//	xn_1_right_ff_filter = z1_right_ff_filter;
+			//Delay sample is x(n - 1)
+			xn_1_left_ff_filter = z1_left_ff_filter;
+			xn_1_right_ff_filter = z1_right_ff_filter;
 
-		//	//Difference Equation
-		//	yn_left_ff_filter = a0_left_ff_filter * xn_left_ff_filter + a1_left_ff_filter * xn_1_left_ff_filter;
-		//	yn_right_ff_filter = a0_right_ff_filter * xn_right_ff_filter + a1_right_ff_filter * xn_1_right_ff_filter;
+			//Difference Equation
+			yn_left_ff_filter = a0_left_ff_filter * xn_left_ff_filter + a1_left_ff_filter * xn_1_left_ff_filter;
+			yn_right_ff_filter = a0_right_ff_filter * xn_right_ff_filter + a1_right_ff_filter * xn_1_right_ff_filter;
 
-		//	//Delay with current x(n)
-		//	z1_left_ff_filter = xn_left_ff_filter;
-		//	z1_right_ff_filter = xn_right_ff_filter;
+			//Delay with current x(n)
+			z1_left_ff_filter = xn_left_ff_filter;
+			z1_right_ff_filter = xn_right_ff_filter;
 
-		//	//Output sample is y(n)
-		//	processFrameInfo.audioOutputFrame[0] = yn_left_ff_filter * master_volume_left;
-		//	processFrameInfo.audioOutputFrame[1] = yn_right_ff_filter * master_volume_right;
-		//}
+			//Output sample is y(n)
+			processFrameInfo.audioOutputFrame[0] = yn_left_ff_filter * master_volume_left;
+			processFrameInfo.audioOutputFrame[1] = yn_right_ff_filter * master_volume_right;
+		}
 
-		//if (compareEnumToInt(filter_selection_guiEnum::FB_Filter, filter_selection_gui))
-		//{
-		//	// Input sample is x(n)
-		//	//xn_left_fb_filter = processFrameInfo.audioInputFrame[0];
-		//	//xn_right_fb_filter = processFrameInfo.audioInputFrame[1];
-		//	xn_left_fb_filter = yn_osc;
-		//	xn_right_fb_filter = yn_osc;
+		if (compareEnumToInt(filter_selection_guiEnum::FB_Filter, filter_selection_gui))
+		{
+			// Input sample is x(n)
+			xn_left_fb_filter = processFrameInfo.audioInputFrame[0];
+			xn_right_fb_filter = processFrameInfo.audioInputFrame[1];
 
-		//	//Delay sample is y(n - 1)
-		//	yn_1_left_fb_filter = z1_left_fb_filter;
-		//	yn_1_right_fb_filter = z1_right_fb_filter;
+			//Delay sample is y(n - 1)
+			yn_1_left_fb_filter = z1_left_fb_filter;
+			yn_1_right_fb_filter = z1_right_fb_filter;
 
-		//	//Difference Equation
-		//	yn_left_fb_filter = a0_left_fb_filter * xn_left_fb_filter - b1_left_fb_filter * yn_1_left_fb_filter;
-		//	yn_right_fb_filter = a0_right_fb_filter * xn_right_fb_filter - b1_right_fb_filter * yn_1_right_fb_filter;
+			//Difference Equation
+			yn_left_fb_filter = a0_left_fb_filter * xn_left_fb_filter - b1_left_fb_filter * yn_1_left_fb_filter;
+			yn_right_fb_filter = a0_right_fb_filter * xn_right_fb_filter - b1_right_fb_filter * yn_1_right_fb_filter;
 
-		//	//Delay with current y(n)
-		//	z1_left_fb_filter = yn_left_fb_filter;
-		//	z1_right_fb_filter = yn_right_fb_filter;
+			//Delay with current y(n)
+			z1_left_fb_filter = yn_left_fb_filter;
+			z1_right_fb_filter = yn_right_fb_filter;
 
-		//	//Output sample is y(n)
-		//	processFrameInfo.audioOutputFrame[0] = yn_left_fb_filter * master_volume_left;
-		//	processFrameInfo.audioOutputFrame[1] = yn_right_fb_filter * master_volume_right;
-		//}
-
-		processFrameInfo.audioOutputFrame[0] = 0.75 * master_volume_left;
-		processFrameInfo.audioOutputFrame[1] = 0.75 * master_volume_right;
-
-		y_z2_osc = y_z1_osc;
-		y_z1_osc = yn_osc;
+			//Output sample is y(n)
+			processFrameInfo.audioOutputFrame[0] = yn_left_fb_filter * master_volume_left;
+			processFrameInfo.audioOutputFrame[1] = yn_right_fb_filter * master_volume_right;
+		}
 
         return true; /// processed
     }
-
-
-	//update oscillator memory blocks
-	//y_z2_osc = y_z1_osc;
-	//y_z1_osc = yn_osc;
 
     return false; /// NOT processed
 }
@@ -640,7 +607,6 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
 			// direct map to the a1 ff filter knob
 			a1_left_ff_filter = a1_ff_filter_gui;
 			a1_right_ff_filter = a1_ff_filter_gui;
-            //return true;    /// handled
 			break;
         }
 
@@ -648,7 +614,6 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
 		{
 			//freq
 			cook_frequency();
-			//return true;    /// handled
 			break;
 		}
 
@@ -658,7 +623,6 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
 			a0_left_ff_filter = a0_ff_filter_gui;
 			a0_right_ff_filter = a0_ff_filter_gui;
 			break;
-			//return true;    /// handled
 		}
 
 		case 20:
@@ -667,7 +631,6 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
 			a0_left_fb_filter = a0_fb_filter_gui;
 			a0_right_fb_filter = a0_fb_filter_gui;
 			break;
-			//return true;    /// handled
 		}
 
 		case 30:
@@ -676,16 +639,14 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
 			b1_left_fb_filter = b1_fb_filter_gui;
 			b1_right_fb_filter = b1_fb_filter_gui;
 			break;
-			//return true;    /// handled
 		}
 
         default:
-            //return false;   /// not handled
 			break;
     }
 
 	return true;
-    //return false;
+
 }
 
 /**
@@ -880,6 +841,7 @@ bool PluginCore::initPluginDescriptors()
 
     // --- AU
     apiSpecificInfo.auBundleID = kAUBundleID;
+	apiSpecificInfo.auBundleName = kAUBundleName;
 	apiSpecificInfo.auBundleName = kAUBundleName;   /* MacOS only: this MUST match the bundle identifier in your info.plist file */
     apiSpecificInfo.auBundleName = kAUBundleName;
 
@@ -923,3 +885,4 @@ void PluginCore::cook_frequency()
 	y_z1_osc = sin(-1.0 * wT);	// sin(w(-1)T)
 	y_z2_osc = sin(-2.0 * wT);	// sin(w(-2)T)
 }
+
