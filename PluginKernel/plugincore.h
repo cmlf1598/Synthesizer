@@ -24,10 +24,10 @@ enum controlID {
 	volume_gui = 1,
 	a0_ff_filter_gui = 10,
 	a0_fb_filter_gui = 20,
-	b1_fb_filter_gui = 30,
 	filter_selection_gui = 40,
-	frequency_direct_osc_gui = 2,
-	start_osc_gui = 12
+	frequency_osc_gui = 2,
+	start_osc_gui = 12,
+	b1_fb_filter_gui = 30
 };
 
 	// **--0x0F1F--**
@@ -131,6 +131,19 @@ public:
 	double z1_left_fb_filter;
 	double z1_right_fb_filter;
 
+	//Oscillator
+	//
+	//coefficients, 2nd Order FB
+	double b1_osc;
+	double b2_osc;
+
+	//delay elements, 2nd Order FB
+	double y_z1_osc;
+	double y_z2_osc;
+
+	//function to cook frequency and set initial conditions
+	void cook_frequency();
+
 	// --- END USER VARIABLES AND FUNCTIONS -------------------------------------- //
 
 private:
@@ -141,8 +154,8 @@ private:
 	double volume_gui = 0.0;
 	double a0_ff_filter_gui = 0.0;
 	double a0_fb_filter_gui = 0.0;
+	double frequency_osc_gui = 0.0;
 	double b1_fb_filter_gui = 0.0;
-	double frequency_direct_osc_gui = 0.0;
 
 	// --- Discrete Plugin Variables 
 	int filter_selection_gui = 0;

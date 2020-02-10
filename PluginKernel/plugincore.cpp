@@ -97,13 +97,6 @@ bool PluginCore::initPluginParameters()
 	piParam->setBoundVariable(&a0_fb_filter_gui, boundVariableType::kDouble);
 	addPluginParameter(piParam);
 
-	// --- continuous control: FB Filter b1
-	piParam = new PluginParameter(controlID::b1_fb_filter_gui, "FB Filter b1", "", controlVariableType::kDouble, -1.000000, 1.000000, 0.000000, taper::kLinearTaper);
-	piParam->setParameterSmoothing(true);
-	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&b1_fb_filter_gui, boundVariableType::kDouble);
-	addPluginParameter(piParam);
-
 	// --- discrete control: Filter selection
 	piParam = new PluginParameter(controlID::filter_selection_gui, "Filter selection", "FF Filter,FB Filter", "FF Filter");
 	piParam->setBoundVariable(&filter_selection_gui, boundVariableType::kInt);
@@ -111,16 +104,23 @@ bool PluginCore::initPluginParameters()
 	addPluginParameter(piParam);
 
 	// --- continuous control: Frequency
-	piParam = new PluginParameter(controlID::frequency_direct_osc_gui, "Frequency", "Hz", controlVariableType::kDouble, 200.000000, 6000.000000, 1000.000000, taper::kLinearTaper);
+	piParam = new PluginParameter(controlID::frequency_osc_gui, "Frequency", "Hz", controlVariableType::kDouble, 200.000000, 6000.000000, 1000.000000, taper::kLinearTaper);
 	piParam->setParameterSmoothing(true);
 	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&frequency_direct_osc_gui, boundVariableType::kDouble);
+	piParam->setBoundVariable(&frequency_osc_gui, boundVariableType::kDouble);
 	addPluginParameter(piParam);
 
 	// --- discrete control: Start Osc
 	piParam = new PluginParameter(controlID::start_osc_gui, "Start Osc", "SWITCH OFF,SWITCH ON", "SWITCH OFF");
 	piParam->setBoundVariable(&start_osc_gui, boundVariableType::kInt);
 	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- continuous control: FB Filter b1
+	piParam = new PluginParameter(controlID::b1_fb_filter_gui, "FB Filter b1", "", controlVariableType::kDouble, -1.000000, 1.000000, 0.000000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&b1_fb_filter_gui, boundVariableType::kDouble);
 	addPluginParameter(piParam);
 
 	// --- Aux Attributes
@@ -147,25 +147,25 @@ bool PluginCore::initPluginParameters()
 	auxAttribute.setUintAttribute(2147483703);
 	setParamAuxAttribute(controlID::a0_fb_filter_gui, auxAttribute);
 
-	// --- controlID::b1_fb_filter_gui
-	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(2147483703);
-	setParamAuxAttribute(controlID::b1_fb_filter_gui, auxAttribute);
-
 	// --- controlID::filter_selection_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(805306368);
 	setParamAuxAttribute(controlID::filter_selection_gui, auxAttribute);
 
-	// --- controlID::frequency_direct_osc_gui
+	// --- controlID::frequency_osc_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(2147483680);
-	setParamAuxAttribute(controlID::frequency_direct_osc_gui, auxAttribute);
+	setParamAuxAttribute(controlID::frequency_osc_gui, auxAttribute);
 
 	// --- controlID::start_osc_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(1073741824);
 	setParamAuxAttribute(controlID::start_osc_gui, auxAttribute);
+
+	// --- controlID::b1_fb_filter_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483703);
+	setParamAuxAttribute(controlID::b1_fb_filter_gui, auxAttribute);
 
 
 	// **--0xEDA5--**
@@ -211,6 +211,8 @@ Operation:
 bool PluginCore::initialize(PluginInfo& pluginInfo)
 {
 	// --- add one-time init stuff here
+	
+	//Filters
 
 	//Feed-Forward Filter setup
 	a0_left_ff_filter = a0_ff_filter_gui;
@@ -231,6 +233,16 @@ bool PluginCore::initialize(PluginInfo& pluginInfo)
 
 	z1_left_fb_filter = 0.0;
 	z1_right_fb_filter = 0.0;
+
+	//Oscillator
+
+	b1_osc = 0;
+	b2_osc = 0;
+
+	y_z1_osc = 0;
+	y_z2_osc = 0;
+
+	cook_frequency();
 
 	return true;
 }
@@ -254,6 +266,8 @@ bool PluginCore::preProcessAudioBuffers(ProcessBufferInfo& processInfo)
     // --- sync internal variables to GUI parameters; you can also do this manually if you don't
     //     want to use the auto-variable-binding
     syncInBoundVariables();
+
+	//cook_frequency();
 
     return true;
 }
@@ -279,6 +293,9 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 	doSampleAccurateParameterUpdates();
 
 	//variables can go here.
+
+	//Oscillator
+	double yn_osc;
 
 	//Feed-Forward Filter 
 	double xn_left_ff_filter;
@@ -307,15 +324,33 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 	// --- Synth Plugin:
 	// --- Synth Plugin --- remove for FX plugins
 
-	//if (getPluginType() == kSynthPlugin)
-	//{
-	//	// --- output silence: change this with your signal render code
-	//	processFrameInfo.audioOutputFrame[0] = 0.0;
-	//	if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
-	//		processFrameInfo.audioOutputFrame[1] = 0.0;
+	if (getPluginType() == kSynthPlugin)
+	{
+		// --- output silence: change this with your signal render code
+		if (start_osc_gui == 0) 
+		{
+			processFrameInfo.audioOutputFrame[0] = 0.0;
+			if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
+				processFrameInfo.audioOutputFrame[1] = 0.0;
 
-	//	return true;	/// processed
-	//}
+			return true;	/// processed
+		}
+
+		//Oscillator
+		yn_osc = -b1_osc * y_z1_osc - b2_osc * y_z2_osc;
+
+		processFrameInfo.audioOutputFrame[0] = master_volume_left*yn_osc;
+		if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
+			processFrameInfo.audioOutputFrame[1] = master_volume_right*yn_osc;
+
+		//update oscillator memory blocks
+		y_z2_osc = y_z1_osc;
+		y_z1_osc = yn_osc;
+	}
+
+
+
+	
 
     // --- FX Plugin:
     if(processFrameInfo.channelIOConfig.inputChannelFormat == kCFMono &&
@@ -572,17 +607,22 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
 			// direct map to the a1 ff filter knob
 			a1_left_ff_filter = a1_ff_filter_gui;
 			a1_right_ff_filter = a1_ff_filter_gui;
-
-            return true;    /// handled
+			break;
         }
+
+		case 2:
+		{
+			//freq
+			cook_frequency();
+			break;
+		}
 
 		case 10:
 		{
 			// direct map to the a0 ff filter knob
 			a0_left_ff_filter = a0_ff_filter_gui;
 			a0_right_ff_filter = a0_ff_filter_gui;
-		
-			return true;    /// handled
+			break;
 		}
 
 		case 20:
@@ -590,8 +630,7 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
 			// direct map to the a0 fb filter knob
 			a0_left_fb_filter = a0_fb_filter_gui;
 			a0_right_fb_filter = a0_fb_filter_gui;
-
-			return true;    /// handled
+			break;
 		}
 
 		case 30:
@@ -599,15 +638,15 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
 			// direct map to the b1 fb filter knob
 			b1_left_fb_filter = b1_fb_filter_gui;
 			b1_right_fb_filter = b1_fb_filter_gui;
-
-			return true;    /// handled
+			break;
 		}
 
         default:
-            return false;   /// not handled
+			break;
     }
 
-    return false;
+	return true;
+
 }
 
 /**
@@ -762,10 +801,10 @@ bool PluginCore::initPluginPresets()
 	setPresetParameter(preset->presetParameters, controlID::volume_gui, 0.707000);
 	setPresetParameter(preset->presetParameters, controlID::a0_ff_filter_gui, 1.000000);
 	setPresetParameter(preset->presetParameters, controlID::a0_fb_filter_gui, 1.000000);
-	setPresetParameter(preset->presetParameters, controlID::b1_fb_filter_gui, 0.000000);
 	setPresetParameter(preset->presetParameters, controlID::filter_selection_gui, -0.000000);
-	setPresetParameter(preset->presetParameters, controlID::frequency_direct_osc_gui, 0.000000);
-	setPresetParameter(preset->presetParameters, controlID::start_osc_gui, 0.000000);
+	setPresetParameter(preset->presetParameters, controlID::frequency_osc_gui, 1000.000000);
+	setPresetParameter(preset->presetParameters, controlID::start_osc_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::b1_fb_filter_gui, 0.000000);
 	addPreset(preset);
 
 
@@ -801,7 +840,9 @@ bool PluginCore::initPluginDescriptors()
     apiSpecificInfo.aaxPluginCategoryCode = kAAXCategory;
 
     // --- AU
-    apiSpecificInfo.auBundleID = kAUBundleID;   /* MacOS only: this MUST match the bundle identifier in your info.plist file */
+    apiSpecificInfo.auBundleID = kAUBundleID;
+	apiSpecificInfo.auBundleName = kAUBundleName;
+	apiSpecificInfo.auBundleName = kAUBundleName;   /* MacOS only: this MUST match the bundle identifier in your info.plist file */
     apiSpecificInfo.auBundleName = kAUBundleName;
 
     // --- VST3
@@ -827,3 +868,21 @@ const char* PluginCore::getAUCocoaViewFactoryName(){ return AU_COCOA_VIEWFACTORY
 pluginType PluginCore::getPluginType(){ return kPluginType; }
 const char* PluginCore::getVSTFUID(){ return kVSTFUID; }
 int32_t PluginCore::getFourCharCode(){ return kFourCharCode; }
+
+
+// --- user defined functions --------------------------------------------- //
+
+void PluginCore::cook_frequency() 
+{
+	//Oscillation Rate = theta = wT = w/fs 
+	double wT = (kTwoPi*frequency_osc_gui)/getSampleRate();
+
+	//coefficients according to design equations
+	b1_osc = -2.0 * cos(wT);
+	b2_osc = 1.0;
+
+	//set initial conditions
+	y_z1_osc = sin(-1.0 * wT);	// sin(w(-1)T)
+	y_z2_osc = sin(-2.0 * wT);	// sin(w(-2)T)
+}
+
