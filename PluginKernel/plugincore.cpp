@@ -123,6 +123,12 @@ bool PluginCore::initPluginParameters()
 	piParam->setBoundVariable(&b1_fb_filter_gui, boundVariableType::kDouble);
 	addPluginParameter(piParam);
 
+	// --- discrete control: Osc Type
+	piParam = new PluginParameter(controlID::osc_type_gui, "Osc Type", "sine,saw,tri,square", "sine");
+	piParam->setBoundVariable(&osc_type_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
 	// --- Aux Attributes
 	AuxParameterAttribute auxAttribute;
 
@@ -166,6 +172,11 @@ bool PluginCore::initPluginParameters()
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(2147483703);
 	setParamAuxAttribute(controlID::b1_fb_filter_gui, auxAttribute);
+
+	// --- controlID::osc_type_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(268435456);
+	setParamAuxAttribute(controlID::osc_type_gui, auxAttribute);
 
 
 	// **--0xEDA5--**
@@ -234,13 +245,52 @@ bool PluginCore::initialize(PluginInfo& pluginInfo)
 	z1_left_fb_filter = 0.0;
 	z1_right_fb_filter = 0.0;
 
-	//Oscillator
+	//Wave Table Oscillators
+
+	//Triangle wave
+	// slope and y-intercept values.
+	// rising edge 1:
+	double m1_tri_r = 1.0 / 256.0;
+	double b1_tri_r = 0.0;
+
+	// rising edge 2:
+	double m2_tri_r = 1.0 / 256.0;
+	double b2_tri_r = - 1.0;
+
+	// falling edge:
+	double m1_tri_f = -2.0 / 512.0;
+	double b1_tri_f = + 1.0;
+
+	// Sawtooth
+	// rising edge 1:
+	double m1_saw_r = 1.0 / 512.0;
+	double b1_saw_r = 0.0;
+
+	// rising edge 2:
+	double m2_saw_r = 1.0 / 512.0;
+	double b2_saw_r = -1.0;
+
 
 	for (int i = 0; i < 1024; i++)
 	{
 		// sample the sinusoid. 1024 points
 		// sin(wnT) = sin(2pi*i/1024)
 		sin_array[i] = sin(((double) (i/ 1024.0) )* (kTwoPi));
+
+		// Sawtooth
+		saw_tooth_array[i] = i < 512 ? m1_saw_r * i + b1_saw_r : m2_saw_r * ((__int64)i - 511) + b2_saw_r;
+
+		// Triangle 
+		if (i < 256)
+			triangle_array[i] = m1_tri_r * i + b1_tri_r;
+		else if (i >= 256 && i < 768)
+			triangle_array[i] = m1_tri_f * ((__int64)i - 256) + b1_tri_f;
+		else
+			triangle_array[i] = m2_tri_r * ((__int64)i - 768) + b2_tri_r;
+
+		// Square
+		square_array[i] = i < 512 ? +1.0 : -1.0;
+
 	}
 
 	// clear variables 
@@ -372,20 +422,33 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 		int_read_index_next = int_read_index + 1 > 1023 ? 0 : int_read_index + 1;
 
 		// interpolate the output
-		out_sample = linear_interpolation(0.0, 1.0, sin_array[int_read_index], sin_array[int_read_index_next], frac_read_index);
+
+		if (compareEnumToInt(osc_type_guiEnum::sine, osc_type_gui)) 
+			//sine
+			out_sample = linear_interpolation(0.0, 1.0, sin_array[int_read_index], sin_array[int_read_index_next], frac_read_index);
+		else if (compareEnumToInt(osc_type_guiEnum::saw, osc_type_gui))
+			//saw
+			out_sample = linear_interpolation(0.0, 1.0, saw_tooth_array[int_read_index], saw_tooth_array[int_read_index_next], frac_read_index);
+		else if (compareEnumToInt(osc_type_guiEnum::tri, osc_type_gui))
+			//triangular
+			out_sample = linear_interpolation(0.0, 1.0, triangle_array[int_read_index], triangle_array[int_read_index_next], frac_read_index);
+		else if (compareEnumToInt(osc_type_guiEnum::square, osc_type_gui))
+			//square
+			out_sample = linear_interpolation(0.0, 1.0, square_array[int_read_index], square_array[int_read_index_next], frac_read_index);
 
 		// add increment 
 		read_index += inc;
 
 		//check the wrap
-		if (read_index > 1024)
-			read_index = read_index - 1024;
-
+		if (read_index > 1024.0)
+			read_index = read_index - 1024.0;
 
 		//write out
 		processFrameInfo.audioOutputFrame[0] = master_volume_left*out_sample;
 		if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
 			processFrameInfo.audioOutputFrame[1] = master_volume_right*out_sample;
+
+		return true;	/// processed
 
 		//update oscillator memory blocks
 		//y_z2_osc = y_z1_osc;
@@ -673,7 +736,7 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
 		{	
 			//if oscillator is started
 			if (start_osc_gui == 1) {
-				reset();
+				//reset(); //this caused a reset every ~66th sample period. 
 				cook_frequency();
 			}
 
@@ -857,9 +920,10 @@ bool PluginCore::initPluginPresets()
 	setPresetParameter(preset->presetParameters, controlID::a0_ff_filter_gui, 1.000000);
 	setPresetParameter(preset->presetParameters, controlID::a0_fb_filter_gui, 1.000000);
 	setPresetParameter(preset->presetParameters, controlID::filter_selection_gui, -0.000000);
-	setPresetParameter(preset->presetParameters, controlID::frequency_osc_gui, 1000.000000);
+	setPresetParameter(preset->presetParameters, controlID::frequency_osc_gui, 440.000000);
 	setPresetParameter(preset->presetParameters, controlID::start_osc_gui, -0.000000);
 	setPresetParameter(preset->presetParameters, controlID::b1_fb_filter_gui, 0.000000);
+	setPresetParameter(preset->presetParameters, controlID::osc_type_gui, 0.000000);
 	addPreset(preset);
 
 

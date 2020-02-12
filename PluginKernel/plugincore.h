@@ -27,7 +27,8 @@ enum controlID {
 	filter_selection_gui = 40,
 	frequency_osc_gui = 2,
 	start_osc_gui = 12,
-	b1_fb_filter_gui = 30
+	b1_fb_filter_gui = 30,
+	osc_type_gui = 22
 };
 
 	// **--0x0F1F--**
@@ -134,7 +135,10 @@ public:
 	//Oscillator
 	//
 	// array for the table
-	double sin_array[1024];	// 1024 Point Sinusoid 
+	double sin_array[1024];			// 1024 Point Sinusoid 
+	double saw_tooth_array[1024];	// saw
+	double triangle_array[1024];	// tri
+	double square_array[1024];		// sqr
 
 	// current read location
 	double read_index;	
@@ -183,6 +187,9 @@ private:
 
 	int start_osc_gui = 0;
 	enum class start_osc_guiEnum { SWITCH_OFF,SWITCH_ON };	// to compare: if(compareEnumToInt(start_osc_guiEnum::SWITCH_OFF, start_osc_gui)) etc... 
+
+	int osc_type_gui = 0;
+	enum class osc_type_guiEnum { sine,saw,tri,square };	// to compare: if(compareEnumToInt(osc_type_guiEnum::sine, osc_type_gui)) etc... 
 
 	// **--0x1A7F--**
     // --- end member variables
