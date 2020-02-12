@@ -1,16 +1,2 @@
-﻿cl : línea de comandos warning D9035: La opción 'Gm' está desusada y se quitará en próximas versiones
-  plugincore.cpp
-D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\PluginKernel\plugincore.cpp(342,60): warning C4244: '=': conversión de 'double' a 'float'; posible pérdida de datos
-D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\PluginKernel\plugincore.cpp(344,62): warning C4244: '=': conversión de 'double' a 'float'; posible pérdida de datos
-D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\PluginKernel\plugincore.cpp(378,61): warning C4244: '=': conversión de 'double' a 'float'; posible pérdida de datos
-D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\PluginKernel\plugincore.cpp(398,61): warning C4244: '=': conversión de 'double' a 'float'; posible pérdida de datos
-D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\PluginKernel\plugincore.cpp(428,61): warning C4244: '=': conversión de 'double' a 'float'; posible pérdida de datos
-D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\PluginKernel\plugincore.cpp(429,62): warning C4244: '=': conversión de 'double' a 'float'; posible pérdida de datos
-D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\PluginKernel\plugincore.cpp(450,61): warning C4244: '=': conversión de 'double' a 'float'; posible pérdida de datos
-D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\PluginKernel\plugincore.cpp(451,62): warning C4244: '=': conversión de 'double' a 'float'; posible pérdida de datos
-D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\PluginKernel\plugincore.cpp(484,61): warning C4244: '=': conversión de 'double' a 'float'; posible pérdida de datos
-D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\PluginKernel\plugincore.cpp(485,62): warning C4244: '=': conversión de 'double' a 'float'; posible pérdida de datos
-D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\PluginKernel\plugincore.cpp(507,61): warning C4244: '=': conversión de 'double' a 'float'; posible pérdida de datos
-D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\PluginKernel\plugincore.cpp(508,62): warning C4244: '=': conversión de 'double' a 'float'; posible pérdida de datos
-     Creando biblioteca D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\RAFX2 WinBuild\\build\Synthesizer.lib y objeto D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\RAFX2 WinBuild\\build\Synthesizer.exp
+﻿     Creando biblioteca D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\RAFX2 WinBuild\\build\Synthesizer.lib y objeto D:\UVG\Proyecto de investigación\Diseño e innovación I\Proyecto I\RackAFX\Synthesizer\RAFX2 WinBuild\\build\Synthesizer.exp
   Synthesizer.vcxproj -> C:\Users\cmlf1\AppData\Roaming\RackAFX 7.0\PlugIns\Synthesizer.rafx2

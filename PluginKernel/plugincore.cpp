@@ -104,7 +104,7 @@ bool PluginCore::initPluginParameters()
 	addPluginParameter(piParam);
 
 	// --- continuous control: Frequency
-	piParam = new PluginParameter(controlID::frequency_osc_gui, "Frequency", "Hz", controlVariableType::kDouble, 200.000000, 6000.000000, 1000.000000, taper::kLinearTaper);
+	piParam = new PluginParameter(controlID::frequency_osc_gui, "Frequency", "Hz", controlVariableType::kDouble, 25.000000, 4200.000000, 440.000000, taper::kLinearTaper);
 	piParam->setParameterSmoothing(true);
 	piParam->setSmoothingTimeMsec(20.00);
 	piParam->setBoundVariable(&frequency_osc_gui, boundVariableType::kDouble);
@@ -236,12 +236,24 @@ bool PluginCore::initialize(PluginInfo& pluginInfo)
 
 	//Oscillator
 
-	b1_osc = 0;
-	b2_osc = 0;
+	for (int i = 0; i < 1024; i++)
+	{
+		// sample the sinusoid. 1024 points
+		// sin(wnT) = sin(2pi*i/1024)
+		sin_array[i] = sin(((double) (i/ 1024.0) )* (kTwoPi));
+	}
 
-	y_z1_osc = 0;
-	y_z2_osc = 0;
+	// clear variables 
+	read_index = 0.0;
+	inc = 0.0;
 
+	//b1_osc = 0;
+	//b2_osc = 0;
+
+	//y_z1_osc = 0;
+	//y_z2_osc = 0;
+
+	// initialize inc
 	cook_frequency();
 
 	return true;
@@ -267,6 +279,10 @@ bool PluginCore::preProcessAudioBuffers(ProcessBufferInfo& processInfo)
     //     want to use the auto-variable-binding
     syncInBoundVariables();
 
+	//reset the index
+	//reset();
+
+	//cook current frequency
 	//cook_frequency();
 
     return true;
@@ -295,7 +311,11 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 	//variables can go here.
 
 	//Oscillator
-	double yn_osc;
+	//double yn_osc;
+	double out_sample;
+	int int_read_index;
+	double frac_read_index;
+	int int_read_index_next;
 
 	//Feed-Forward Filter 
 	double xn_left_ff_filter;
@@ -337,15 +357,39 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 		}
 
 		//Oscillator
-		yn_osc = -b1_osc * y_z1_osc - b2_osc * y_z2_osc;
+		//yn_osc = -b1_osc * y_z1_osc - b2_osc * y_z2_osc;
 
-		processFrameInfo.audioOutputFrame[0] = master_volume_left*yn_osc;
+		// output value for this cycle
+		out_sample = 0;
+
+		// get integer part
+		int_read_index = (int) read_index;
+
+		//get fractional part
+		frac_read_index = read_index - (double) int_read_index;
+
+		//second index for interpolation: wrap around buffer if needed
+		int_read_index_next = int_read_index + 1 > 1023 ? 0 : int_read_index + 1;
+
+		// interpolate the output
+		out_sample = linear_interpolation(0.0, 1.0, sin_array[int_read_index], sin_array[int_read_index_next], frac_read_index);
+
+		// add increment 
+		read_index += inc;
+
+		//check the wrap
+		if (read_index > 1024)
+			read_index = read_index - 1024;
+
+
+		//write out
+		processFrameInfo.audioOutputFrame[0] = master_volume_left*out_sample;
 		if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
-			processFrameInfo.audioOutputFrame[1] = master_volume_right*yn_osc;
+			processFrameInfo.audioOutputFrame[1] = master_volume_right*out_sample;
 
 		//update oscillator memory blocks
-		y_z2_osc = y_z1_osc;
-		y_z1_osc = yn_osc;
+		//y_z2_osc = y_z1_osc;
+		//y_z1_osc = yn_osc;
 	}
 
 
@@ -625,6 +669,17 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
 			break;
 		}
 
+		case 12:
+		{	
+			//if oscillator is started
+			if (start_osc_gui == 1) {
+				reset();
+				cook_frequency();
+			}
+
+			break;
+		}
+
 		case 20:
 		{
 			// direct map to the a0 fb filter knob
@@ -843,6 +898,8 @@ bool PluginCore::initPluginDescriptors()
     apiSpecificInfo.auBundleID = kAUBundleID;
 	apiSpecificInfo.auBundleName = kAUBundleName;
 	apiSpecificInfo.auBundleName = kAUBundleName;
+	apiSpecificInfo.auBundleName = kAUBundleName;
+	apiSpecificInfo.auBundleName = kAUBundleName;
 	apiSpecificInfo.auBundleName = kAUBundleName;   /* MacOS only: this MUST match the bundle identifier in your info.plist file */
     apiSpecificInfo.auBundleName = kAUBundleName;
 
@@ -875,34 +932,46 @@ int32_t PluginCore::getFourCharCode(){ return kFourCharCode; }
 
 void PluginCore::cook_frequency() 
 {
+	//inc = L*fd/fs
+
+	inc = 1024.0 * frequency_osc_gui / getSampleRate();
+
 	//Oscillation Rate = theta = wT = w/fs 
-	double wT = (kTwoPi*frequency_osc_gui)/getSampleRate();
+	//double wT = (kTwoPi*frequency_osc_gui)/getSampleRate();
 
 	//coefficients according to design equations
-	b1_osc = -2.0 * cos(wT);
-	b2_osc = 1.0;
+	//b1_osc = -2.0 * cos(wT);
+	//b2_osc = 1.0;
 
 	//set initial conditions
 	//y_z1_osc = sin(-1.0 * wT);	// sin(w(-1)T)
 	//y_z2_osc = sin(-2.0 * wT);	// sin(w(-2)T)
 
 	//re calculate new initial conditions
-	double wnT1 = asin(y_z1_osc);
-	//find n
-	double n = wnT1 / wT;
+	//double wnT1 = asin(y_z1_osc);
+	////find n
+	//double n = wnT1 / wT;
 
 	//asin will only return values from -pi/2 to pi/2 
 	//(a sine wave in this range only includes a rising edge)
 	//If we are on a rising edge, use the value 1T behind. 
 	//On the other hand, on a falling edge the value 1T ahead is
 	//equivalent to the 1T behind.
-	if (y_z1_osc > y_z2_osc)
-		n -= 1;
-	else
-		n += 1;
+	//if (y_z1_osc > y_z2_osc)
+	//	n -= 1;
+	//else
+	//	n += 1;
 
-	//calculate the new sample
-	y_z2_osc = sin((n)*wT);
+	////calculate the new sample
+	//y_z2_osc = sin((n)*wT);
 }
 
 
+double PluginCore::linear_interpolation(double x1, double x2, double y1, double y2, double frac)
+{
+	double m = (y2 - y1) / (x2 - x1);
+
+	double y = y2 - ( m * (x2 - frac));
+
+	return y;
+}

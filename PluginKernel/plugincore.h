@@ -133,13 +133,33 @@ public:
 
 	//Oscillator
 	//
-	//coefficients, 2nd Order FB
-	double b1_osc;
-	double b2_osc;
+	// array for the table
+	double sin_array[1024];	// 1024 Point Sinusoid 
 
-	//delay elements, 2nd Order FB
-	double y_z1_osc;
-	double y_z2_osc;
+	// current read location
+	double read_index;	
+
+	// reset the read index
+	void reset()
+	{
+		read_index = 0.0;
+	}
+
+	// increment value
+	double inc;
+
+	// linear interpolation 
+	double linear_interpolation(double x1, double x2, double y1, double y2, double frac);
+
+	//Direct Oscillator
+
+	////coefficients, 2nd Order FB
+	//double b1_osc;
+	//double b2_osc;
+
+	////delay elements, 2nd Order FB
+	//double y_z1_osc;
+	//double y_z2_osc;
 
 	//function to cook frequency and set initial conditions
 	void cook_frequency();
