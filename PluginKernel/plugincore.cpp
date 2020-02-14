@@ -129,6 +129,12 @@ bool PluginCore::initPluginParameters()
 	piParam->setIsDiscreteSwitch(true);
 	addPluginParameter(piParam);
 
+	// --- discrete control: Mode
+	piParam = new PluginParameter(controlID::osc_mode_gui, "Mode", "normal,bandlimited", "normal");
+	piParam->setBoundVariable(&osc_mode_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
 	// --- Aux Attributes
 	AuxParameterAttribute auxAttribute;
 
@@ -177,6 +183,11 @@ bool PluginCore::initPluginParameters()
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(268435456);
 	setParamAuxAttribute(controlID::osc_type_gui, auxAttribute);
+
+	// --- controlID::osc_mode_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(268435456);
+	setParamAuxAttribute(controlID::osc_mode_gui, auxAttribute);
 
 
 	// **--0xEDA5--**
@@ -270,6 +281,12 @@ bool PluginCore::initialize(PluginInfo& pluginInfo)
 	double m2_saw_r = 1.0 / 512.0;
 	double b2_saw_r = -1.0;
 
+	//setup arrays 
+	// maxes used for normalization
+	double max_tri = 0;
+	double max_saw = 0;
+	double max_sqr = 0;
+
 
 	for (int i = 0; i < 1024; i++)
 	{
@@ -289,9 +306,66 @@ bool PluginCore::initialize(PluginInfo& pluginInfo)
 			triangle_array[i] = m2_tri_r * ((__int64)i - 768) + b2_tri_r;
 
 		// Square
-		square_array[i] = i < 512 ? +1.0 : -1.0;
+		if (i == 1)
+			square_array[i] = 0.0;
+		else 
+			square_array[i] = i < 512 ? +1.0 : -1.0;
 
+		//zero at the start of each
+		saw_tooth_array_bl5[i] = 0.0;
+		triangle_array_bl5[i] = 0.0;
+		square_array_bl5[i] = 0.0;
+
+		// sawtooth harmonics
+		for (int g = 1; g <= 6; g++) 
+		{
+			double n = (double) g;
+			saw_tooth_array_bl5[i] += pow(-1.0, g + 1) * (1.0 / n) * sin(kTwoPi * i * n / 1024.0);
+		}
+
+		// triangle harmonics
+		for (int g = 0; g <= 3; g++)
+		{
+			double n = (double) g;
+			triangle_array_bl5[i] += pow(-1.0, g) * (1.0 / pow((2 * n + 1), 2)) * sin(kTwoPi * (2.0 * n + 1) * i / 1024.0);
+		}
+
+		// square harmonics
+		for (int g = 1; g <= 5; g += 2)
+		{
+			double n = double(g);
+			square_array_bl5[i] += (1.0 / n) * sin(kTwoPi * i * n / 1024.0);
+		}
+
+		if (i == 0)
+		{
+			max_saw = saw_tooth_array_bl5[i];
+			max_tri = triangle_array_bl5[i];
+			max_sqr = square_array_bl5[i];
+		}
+		else
+		{
+			//test and store
+			if (saw_tooth_array_bl5[i] > max_saw)
+				max_saw = saw_tooth_array_bl5[i];
+
+			if (triangle_array_bl5[i] > max_tri)
+				max_tri = triangle_array_bl5[i];
+
+			if (square_array_bl5[i] > max_sqr)
+				max_sqr = square_array_bl5[i];
+		}
 	}
+
+	//normalize the bandlimited tables
+	for (int i = 0; i < 1024; i++)
+	{
+		//normalize it
+		saw_tooth_array_bl5[i] /= max_saw;
+		triangle_array_bl5[i] /= max_tri;
+		square_array_bl5[i] /= max_sqr;
+	}
+
 
 	// clear variables 
 	read_index = 0.0;
@@ -428,14 +502,22 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 			out_sample = linear_interpolation(0.0, 1.0, sin_array[int_read_index], sin_array[int_read_index_next], frac_read_index);
 		else if (compareEnumToInt(osc_type_guiEnum::saw, osc_type_gui))
 			//saw
-			out_sample = linear_interpolation(0.0, 1.0, saw_tooth_array[int_read_index], saw_tooth_array[int_read_index_next], frac_read_index);
+			if (compareEnumToInt(osc_mode_guiEnum::normal, osc_mode_gui))
+				out_sample = linear_interpolation(0.0, 1.0, saw_tooth_array[int_read_index], saw_tooth_array[int_read_index_next], frac_read_index);
+			else 
+				out_sample = linear_interpolation(0.0, 1.0, saw_tooth_array_bl5[int_read_index], saw_tooth_array_bl5[int_read_index_next], frac_read_index);
 		else if (compareEnumToInt(osc_type_guiEnum::tri, osc_type_gui))
 			//triangular
-			out_sample = linear_interpolation(0.0, 1.0, triangle_array[int_read_index], triangle_array[int_read_index_next], frac_read_index);
+			if (compareEnumToInt(osc_mode_guiEnum::normal, osc_mode_gui))
+				out_sample = linear_interpolation(0.0, 1.0, triangle_array[int_read_index], triangle_array[int_read_index_next], frac_read_index);
+			else
+				out_sample = linear_interpolation(0.0, 1.0, triangle_array_bl5[int_read_index], triangle_array_bl5[int_read_index_next], frac_read_index);
 		else if (compareEnumToInt(osc_type_guiEnum::square, osc_type_gui))
 			//square
-			out_sample = linear_interpolation(0.0, 1.0, square_array[int_read_index], square_array[int_read_index_next], frac_read_index);
-
+			if (compareEnumToInt(osc_mode_guiEnum::normal, osc_mode_gui))
+				out_sample = linear_interpolation(0.0, 1.0, square_array[int_read_index], square_array[int_read_index_next], frac_read_index);
+			else 
+				out_sample = linear_interpolation(0.0, 1.0, square_array_bl5[int_read_index], square_array_bl5[int_read_index_next], frac_read_index);
 		// add increment 
 		read_index += inc;
 
@@ -923,7 +1005,8 @@ bool PluginCore::initPluginPresets()
 	setPresetParameter(preset->presetParameters, controlID::frequency_osc_gui, 440.000000);
 	setPresetParameter(preset->presetParameters, controlID::start_osc_gui, -0.000000);
 	setPresetParameter(preset->presetParameters, controlID::b1_fb_filter_gui, 0.000000);
-	setPresetParameter(preset->presetParameters, controlID::osc_type_gui, 0.000000);
+	setPresetParameter(preset->presetParameters, controlID::osc_type_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::osc_mode_gui, 0.000000);
 	addPreset(preset);
 
 

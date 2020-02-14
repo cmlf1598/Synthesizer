@@ -28,7 +28,8 @@ enum controlID {
 	frequency_osc_gui = 2,
 	start_osc_gui = 12,
 	b1_fb_filter_gui = 30,
-	osc_type_gui = 22
+	osc_type_gui = 22,
+	osc_mode_gui = 32
 };
 
 	// **--0x0F1F--**
@@ -140,6 +141,11 @@ public:
 	double triangle_array[1024];	// tri
 	double square_array[1024];		// sqr
 
+	// band limited to the 5th harmonic
+	double saw_tooth_array_bl5[1024];
+	double triangle_array_bl5[1024];
+	double square_array_bl5[1024];
+
 	// current read location
 	double read_index;	
 
@@ -190,6 +196,9 @@ private:
 
 	int osc_type_gui = 0;
 	enum class osc_type_guiEnum { sine,saw,tri,square };	// to compare: if(compareEnumToInt(osc_type_guiEnum::sine, osc_type_gui)) etc... 
+
+	int osc_mode_gui = 0;
+	enum class osc_mode_guiEnum { normal,bandlimited };	// to compare: if(compareEnumToInt(osc_mode_guiEnum::normal, osc_mode_gui)) etc... 
 
 	// **--0x1A7F--**
     // --- end member variables
