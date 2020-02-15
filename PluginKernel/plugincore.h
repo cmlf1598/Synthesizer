@@ -20,16 +20,16 @@
 // --- Plugin Variables controlID Enumeration 
 
 enum controlID {
-	a1_ff_filter_gui = 0,
-	volume_gui = 1,
-	a0_ff_filter_gui = 10,
-	a0_fb_filter_gui = 20,
-	filter_selection_gui = 40,
-	frequency_osc_gui = 2,
-	start_osc_gui = 12,
-	b1_fb_filter_gui = 30,
-	osc_type_gui = 22,
-	osc_mode_gui = 32
+	volume_osc_1_gui = 11,
+	frequency_osc_1_gui = 12,
+	start_osc_1_gui = 10,
+	osc_1_type_gui = 13,
+	osc_1_mode_gui = 14,
+	start_osc_2_gui = 20,
+	frequency_osc_2_gui = 22,
+	osc_2_type_gui = 23,
+	osc_2_mode_gui = 24,
+	volume_osc_2_gui = 21
 };
 
 	// **--0x0F1F--**
@@ -113,29 +113,9 @@ public:
 	// --- BEGIN USER VARIABLES AND FUNCTIONS -------------------------------------- //
 	//	   Add your variables and methods here
 
-	//Feed-Forward Filter variables
-	double a0_left_ff_filter;
-	double a0_right_ff_filter;
-	
-	double a1_left_ff_filter;
-	double a1_right_ff_filter;
-
-	double z1_left_ff_filter;
-	double z1_right_ff_filter;
-
-	//Feed-back Filter variables
-	double a0_left_fb_filter;
-	double a0_right_fb_filter;
-	
-	double b1_left_fb_filter;
-	double b1_right_fb_filter;
-
-	double z1_left_fb_filter;
-	double z1_right_fb_filter;
-
-	//Oscillator
+	//Oscillators
 	//
-	// array for the table
+	// arrays for the tables
 	double sin_array[1024];			// 1024 Point Sinusoid 
 	double saw_tooth_array[1024];	// saw
 	double triangle_array[1024];	// tri
@@ -146,33 +126,27 @@ public:
 	double triangle_array_bl5[1024];
 	double square_array_bl5[1024];
 
-	// current read location
-	double read_index;	
+	// current read locations
+	double read_index_osc_1;	
+	double read_index_osc_2;
 
-	// reset the read index
+	// reset the read indexes
 	void reset()
 	{
-		read_index = 0.0;
+		read_index_osc_1 = 0.0;
+		read_index_osc_2 = 0.0;
 	}
 
-	// increment value
-	double inc;
+	// increment values
+	double inc_osc_1;
+	double inc_osc_2;
 
 	// linear interpolation 
 	double linear_interpolation(double x1, double x2, double y1, double y2, double frac);
 
-	//Direct Oscillator
-
-	////coefficients, 2nd Order FB
-	//double b1_osc;
-	//double b2_osc;
-
-	////delay elements, 2nd Order FB
-	//double y_z1_osc;
-	//double y_z2_osc;
-
 	//function to cook frequency and set initial conditions
-	void cook_frequency();
+	void cook_frequency_osc_1();
+	void cook_frequency_osc_2();
 
 	// --- END USER VARIABLES AND FUNCTIONS -------------------------------------- //
 
@@ -180,25 +154,29 @@ private:
 	//  **--0x07FD--**
 
 	// --- Continuous Plugin Variables 
-	double a1_ff_filter_gui = 0.0;
-	double volume_gui = 0.0;
-	double a0_ff_filter_gui = 0.0;
-	double a0_fb_filter_gui = 0.0;
-	double frequency_osc_gui = 0.0;
-	double b1_fb_filter_gui = 0.0;
+	double volume_osc_1_gui = 0.0;
+	double frequency_osc_1_gui = 0.0;
+	double frequency_osc_2_gui = 0.0;
+	double volume_osc_2_gui = 0.0;
 
 	// --- Discrete Plugin Variables 
-	int filter_selection_gui = 0;
-	enum class filter_selection_guiEnum { FF_Filter,FB_Filter };	// to compare: if(compareEnumToInt(filter_selection_guiEnum::FF_Filter, filter_selection_gui)) etc... 
+	int start_osc_1_gui = 0;
+	enum class start_osc_1_guiEnum { SWITCH_OFF,SWITCH_ON };	// to compare: if(compareEnumToInt(start_osc_1_guiEnum::SWITCH_OFF, start_osc_1_gui)) etc... 
 
-	int start_osc_gui = 0;
-	enum class start_osc_guiEnum { SWITCH_OFF,SWITCH_ON };	// to compare: if(compareEnumToInt(start_osc_guiEnum::SWITCH_OFF, start_osc_gui)) etc... 
+	int osc_1_type_gui = 0;
+	enum class osc_1_type_guiEnum { sine,saw,tri,square };	// to compare: if(compareEnumToInt(osc_1_type_guiEnum::sine, osc_1_type_gui)) etc... 
 
-	int osc_type_gui = 0;
-	enum class osc_type_guiEnum { sine,saw,tri,square };	// to compare: if(compareEnumToInt(osc_type_guiEnum::sine, osc_type_gui)) etc... 
+	int osc_1_mode_gui = 0;
+	enum class osc_1_mode_guiEnum { normal,bandlimited };	// to compare: if(compareEnumToInt(osc_1_mode_guiEnum::normal, osc_1_mode_gui)) etc... 
 
-	int osc_mode_gui = 0;
-	enum class osc_mode_guiEnum { normal,bandlimited };	// to compare: if(compareEnumToInt(osc_mode_guiEnum::normal, osc_mode_gui)) etc... 
+	int start_osc_2_gui = 0;
+	enum class start_osc_2_guiEnum { SWITCH_OFF,SWITCH_ON };	// to compare: if(compareEnumToInt(start_osc_2_guiEnum::SWITCH_OFF, start_osc_2_gui)) etc... 
+
+	int osc_2_type_gui = 0;
+	enum class osc_2_type_guiEnum { sine,saw,tri,square };	// to compare: if(compareEnumToInt(osc_2_type_guiEnum::sine, osc_2_type_gui)) etc... 
+
+	int osc_2_mode_gui = 0;
+	enum class osc_2_mode_guiEnum { normal,bandlimited };	// to compare: if(compareEnumToInt(osc_2_mode_guiEnum::normal, osc_2_mode_gui)) etc... 
 
 	// **--0x1A7F--**
     // --- end member variables

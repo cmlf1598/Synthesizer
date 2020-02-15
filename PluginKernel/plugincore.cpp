@@ -69,125 +69,123 @@ bool PluginCore::initPluginParameters()
 	// --- Declaration of Plugin Parameter Objects 
 	PluginParameter* piParam = nullptr;
 
-	// --- continuous control: FF Filter a1
-	piParam = new PluginParameter(controlID::a1_ff_filter_gui, "FF Filter a1", "", controlVariableType::kDouble, -1.000000, 1.000000, 0.000000, taper::kLinearTaper);
+	// --- continuous control: Vol Osc 1
+	piParam = new PluginParameter(controlID::volume_osc_1_gui, "Vol Osc 1", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.707000, taper::kAntiLogTaper);
 	piParam->setParameterSmoothing(true);
 	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&a1_ff_filter_gui, boundVariableType::kDouble);
+	piParam->setBoundVariable(&volume_osc_1_gui, boundVariableType::kDouble);
 	addPluginParameter(piParam);
 
-	// --- continuous control: Volume
-	piParam = new PluginParameter(controlID::volume_gui, "Volume", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.707000, taper::kAntiLogTaper);
+	// --- continuous control: Freq Osc 1
+	piParam = new PluginParameter(controlID::frequency_osc_1_gui, "Freq Osc 1", "Hz", controlVariableType::kDouble, 25.000000, 4200.000000, 440.000000, taper::kLinearTaper);
 	piParam->setParameterSmoothing(true);
 	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&volume_gui, boundVariableType::kDouble);
+	piParam->setBoundVariable(&frequency_osc_1_gui, boundVariableType::kDouble);
 	addPluginParameter(piParam);
 
-	// --- continuous control: FF Filter a0
-	piParam = new PluginParameter(controlID::a0_ff_filter_gui, "FF Filter a0", "", controlVariableType::kDouble, -1.000000, 1.000000, 1.000000, taper::kLinearTaper);
-	piParam->setParameterSmoothing(true);
-	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&a0_ff_filter_gui, boundVariableType::kDouble);
-	addPluginParameter(piParam);
-
-	// --- continuous control: FB Filter a0
-	piParam = new PluginParameter(controlID::a0_fb_filter_gui, "FB Filter a0", "", controlVariableType::kDouble, -1.000000, 1.000000, 1.000000, taper::kLinearTaper);
-	piParam->setParameterSmoothing(true);
-	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&a0_fb_filter_gui, boundVariableType::kDouble);
-	addPluginParameter(piParam);
-
-	// --- discrete control: Filter selection
-	piParam = new PluginParameter(controlID::filter_selection_gui, "Filter selection", "FF Filter,FB Filter", "FF Filter");
-	piParam->setBoundVariable(&filter_selection_gui, boundVariableType::kInt);
+	// --- discrete control: Start Osc 1
+	piParam = new PluginParameter(controlID::start_osc_1_gui, "Start Osc 1", "SWITCH OFF,SWITCH ON", "SWITCH OFF");
+	piParam->setBoundVariable(&start_osc_1_gui, boundVariableType::kInt);
 	piParam->setIsDiscreteSwitch(true);
 	addPluginParameter(piParam);
 
-	// --- continuous control: Frequency
-	piParam = new PluginParameter(controlID::frequency_osc_gui, "Frequency", "Hz", controlVariableType::kDouble, 25.000000, 4200.000000, 440.000000, taper::kLinearTaper);
+	// --- discrete control: Osc 1 Type
+	piParam = new PluginParameter(controlID::osc_1_type_gui, "Osc 1 Type", "sine,saw,tri,square", "sine");
+	piParam->setBoundVariable(&osc_1_type_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- discrete control: Osc 1 Mode
+	piParam = new PluginParameter(controlID::osc_1_mode_gui, "Osc 1 Mode", "normal,bandlimited", "normal");
+	piParam->setBoundVariable(&osc_1_mode_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- discrete control: Start Osc 2
+	piParam = new PluginParameter(controlID::start_osc_2_gui, "Start Osc 2", "SWITCH OFF,SWITCH ON", "SWITCH OFF");
+	piParam->setBoundVariable(&start_osc_2_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Freq Osc 2
+	piParam = new PluginParameter(controlID::frequency_osc_2_gui, "Freq Osc 2", "Hz", controlVariableType::kDouble, 25.000000, 4200.000000, 440.000000, taper::kLinearTaper);
 	piParam->setParameterSmoothing(true);
 	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&frequency_osc_gui, boundVariableType::kDouble);
+	piParam->setBoundVariable(&frequency_osc_2_gui, boundVariableType::kDouble);
 	addPluginParameter(piParam);
 
-	// --- discrete control: Start Osc
-	piParam = new PluginParameter(controlID::start_osc_gui, "Start Osc", "SWITCH OFF,SWITCH ON", "SWITCH OFF");
-	piParam->setBoundVariable(&start_osc_gui, boundVariableType::kInt);
+	// --- discrete control: Osc 2 Type
+	piParam = new PluginParameter(controlID::osc_2_type_gui, "Osc 2 Type", "sine,saw,tri,square", "sine");
+	piParam->setBoundVariable(&osc_2_type_gui, boundVariableType::kInt);
 	piParam->setIsDiscreteSwitch(true);
 	addPluginParameter(piParam);
 
-	// --- continuous control: FB Filter b1
-	piParam = new PluginParameter(controlID::b1_fb_filter_gui, "FB Filter b1", "", controlVariableType::kDouble, -1.000000, 1.000000, 0.000000, taper::kLinearTaper);
+	// --- discrete control: Osc 2 Mode
+	piParam = new PluginParameter(controlID::osc_2_mode_gui, "Osc 2 Mode", "normal,bandlimited", "normal");
+	piParam->setBoundVariable(&osc_2_mode_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Vol Osc 2
+	piParam = new PluginParameter(controlID::volume_osc_2_gui, "Vol Osc 2", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.707000, taper::kAntiLogTaper);
 	piParam->setParameterSmoothing(true);
 	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&b1_fb_filter_gui, boundVariableType::kDouble);
-	addPluginParameter(piParam);
-
-	// --- discrete control: Osc Type
-	piParam = new PluginParameter(controlID::osc_type_gui, "Osc Type", "sine,saw,tri,square", "sine");
-	piParam->setBoundVariable(&osc_type_gui, boundVariableType::kInt);
-	piParam->setIsDiscreteSwitch(true);
-	addPluginParameter(piParam);
-
-	// --- discrete control: Mode
-	piParam = new PluginParameter(controlID::osc_mode_gui, "Mode", "normal,bandlimited", "normal");
-	piParam->setBoundVariable(&osc_mode_gui, boundVariableType::kInt);
-	piParam->setIsDiscreteSwitch(true);
+	piParam->setBoundVariable(&volume_osc_2_gui, boundVariableType::kDouble);
 	addPluginParameter(piParam);
 
 	// --- Aux Attributes
 	AuxParameterAttribute auxAttribute;
 
 	// --- RAFX GUI attributes
-	// --- controlID::a1_ff_filter_gui
-	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(2147483703);
-	setParamAuxAttribute(controlID::a1_ff_filter_gui, auxAttribute);
-
-	// --- controlID::volume_gui
+	// --- controlID::volume_osc_1_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(2147483702);
-	setParamAuxAttribute(controlID::volume_gui, auxAttribute);
+	setParamAuxAttribute(controlID::volume_osc_1_gui, auxAttribute);
 
-	// --- controlID::a0_ff_filter_gui
-	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(2147483703);
-	setParamAuxAttribute(controlID::a0_ff_filter_gui, auxAttribute);
-
-	// --- controlID::a0_fb_filter_gui
-	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(2147483703);
-	setParamAuxAttribute(controlID::a0_fb_filter_gui, auxAttribute);
-
-	// --- controlID::filter_selection_gui
-	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(805306368);
-	setParamAuxAttribute(controlID::filter_selection_gui, auxAttribute);
-
-	// --- controlID::frequency_osc_gui
+	// --- controlID::frequency_osc_1_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(2147483680);
-	setParamAuxAttribute(controlID::frequency_osc_gui, auxAttribute);
+	setParamAuxAttribute(controlID::frequency_osc_1_gui, auxAttribute);
 
-	// --- controlID::start_osc_gui
+	// --- controlID::start_osc_1_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(1073741824);
-	setParamAuxAttribute(controlID::start_osc_gui, auxAttribute);
+	setParamAuxAttribute(controlID::start_osc_1_gui, auxAttribute);
 
-	// --- controlID::b1_fb_filter_gui
-	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(2147483703);
-	setParamAuxAttribute(controlID::b1_fb_filter_gui, auxAttribute);
-
-	// --- controlID::osc_type_gui
+	// --- controlID::osc_1_type_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(268435456);
-	setParamAuxAttribute(controlID::osc_type_gui, auxAttribute);
+	setParamAuxAttribute(controlID::osc_1_type_gui, auxAttribute);
 
-	// --- controlID::osc_mode_gui
+	// --- controlID::osc_1_mode_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(268435456);
-	setParamAuxAttribute(controlID::osc_mode_gui, auxAttribute);
+	setParamAuxAttribute(controlID::osc_1_mode_gui, auxAttribute);
+
+	// --- controlID::start_osc_2_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(1073741824);
+	setParamAuxAttribute(controlID::start_osc_2_gui, auxAttribute);
+
+	// --- controlID::frequency_osc_2_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483680);
+	setParamAuxAttribute(controlID::frequency_osc_2_gui, auxAttribute);
+
+	// --- controlID::osc_2_type_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(268435456);
+	setParamAuxAttribute(controlID::osc_2_type_gui, auxAttribute);
+
+	// --- controlID::osc_2_mode_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(268435456);
+	setParamAuxAttribute(controlID::osc_2_mode_gui, auxAttribute);
+
+	// --- controlID::volume_osc_2_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483702);
+	setParamAuxAttribute(controlID::volume_osc_2_gui, auxAttribute);
 
 
 	// **--0xEDA5--**
@@ -234,28 +232,6 @@ bool PluginCore::initialize(PluginInfo& pluginInfo)
 {
 	// --- add one-time init stuff here
 	
-	//Filters
-
-	//Feed-Forward Filter setup
-	a0_left_ff_filter = a0_ff_filter_gui;
-	a0_right_ff_filter = a0_ff_filter_gui;
-
-	a1_left_ff_filter = a1_ff_filter_gui;
-	a1_right_ff_filter = a1_ff_filter_gui;
-
-	z1_left_ff_filter = 0.0;
-	z1_right_ff_filter = 0.0;
-
-	//Feed-Back Filter initialization
-	a0_left_fb_filter = a0_fb_filter_gui;
-	a0_right_fb_filter = a0_fb_filter_gui;
-
-	b1_left_fb_filter = b1_fb_filter_gui;
-	b1_right_fb_filter = b1_fb_filter_gui;
-
-	z1_left_fb_filter = 0.0;
-	z1_right_fb_filter = 0.0;
-
 	//Wave Table Oscillators
 
 	//Triangle wave
@@ -368,17 +344,13 @@ bool PluginCore::initialize(PluginInfo& pluginInfo)
 
 
 	// clear variables 
-	read_index = 0.0;
-	inc = 0.0;
-
-	//b1_osc = 0;
-	//b2_osc = 0;
-
-	//y_z1_osc = 0;
-	//y_z2_osc = 0;
+	reset();
+	inc_osc_1 = 0.0;
+	inc_osc_2 = 0.0;
 
 	// initialize inc
-	cook_frequency();
+	cook_frequency_osc_1();
+	cook_frequency_osc_2();
 
 	return true;
 }
@@ -434,34 +406,25 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 
 	//variables can go here.
 
-	//Oscillator
-	//double yn_osc;
-	double out_sample;
-	int int_read_index;
-	double frac_read_index;
-	int int_read_index_next;
+	//Oscillators
+	//
+	//Oscillator 1
+	double out_sample_osc_1;
+	int int_read_index_osc_1;
+	double frac_read_index_osc_1;
+	int int_read_index_next_osc_1;
 
-	//Feed-Forward Filter 
-	double xn_left_ff_filter;
-	double xn_1_left_ff_filter;
-	double yn_left_ff_filter;
+	//Oscillator 2
+	double out_sample_osc_2;
+	int int_read_index_osc_2;
+	double frac_read_index_osc_2;
+	int int_read_index_next_osc_2;
 
-	double xn_right_ff_filter;
-	double xn_1_right_ff_filter;
-	double yn_right_ff_filter;
-
-	//Feed-Back Filter 
-	double xn_left_fb_filter;
-	double yn_left_fb_filter;
-	double yn_1_left_fb_filter;
-
-	double xn_right_fb_filter;
-	double yn_right_fb_filter;
-	double yn_1_right_fb_filter;
-
+	//
+	double final_out_sample;
 	//Volume
-	double master_volume_left = volume_gui;
-	double master_volume_right = volume_gui;
+	//double master_volume_left = volume_osc_1_gui;
+	//double master_volume_right = volume_osc_1_gui;
 
     // --- decode the channelIOConfiguration and process accordingly
     //
@@ -471,7 +434,7 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 	if (getPluginType() == kSynthPlugin)
 	{
 		// --- output silence: change this with your signal render code
-		if (start_osc_gui == 0) 
+		if ( (start_osc_1_gui == 0) && (start_osc_2_gui == 0) )
 		{
 			processFrameInfo.audioOutputFrame[0] = 0.0;
 			if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
@@ -480,61 +443,95 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 			return true;	/// processed
 		}
 
-		//Oscillator
-		//yn_osc = -b1_osc * y_z1_osc - b2_osc * y_z2_osc;
 
 		// output value for this cycle
-		out_sample = 0;
+		out_sample_osc_1 = 0;
+		out_sample_osc_2 = 0;
 
 		// get integer part
-		int_read_index = (int) read_index;
+		int_read_index_osc_1 = (int) read_index_osc_1;
+		int_read_index_osc_2 = (int)read_index_osc_2;
 
 		//get fractional part
-		frac_read_index = read_index - (double) int_read_index;
+		frac_read_index_osc_1 = read_index_osc_1 - (double) int_read_index_osc_1;
+		frac_read_index_osc_2 = read_index_osc_2 - (double)int_read_index_osc_2;
 
 		//second index for interpolation: wrap around buffer if needed
-		int_read_index_next = int_read_index + 1 > 1023 ? 0 : int_read_index + 1;
+		int_read_index_next_osc_1 = int_read_index_osc_1 + 1 > 1023 ? 0 : int_read_index_osc_1 + 1;
+		int_read_index_next_osc_2 = int_read_index_osc_2 + 1 > 1023 ? 0 : int_read_index_osc_2 + 1;
 
 		// interpolate the output
 
-		if (compareEnumToInt(osc_type_guiEnum::sine, osc_type_gui)) 
-			//sine
-			out_sample = linear_interpolation(0.0, 1.0, sin_array[int_read_index], sin_array[int_read_index_next], frac_read_index);
-		else if (compareEnumToInt(osc_type_guiEnum::saw, osc_type_gui))
-			//saw
-			if (compareEnumToInt(osc_mode_guiEnum::normal, osc_mode_gui))
-				out_sample = linear_interpolation(0.0, 1.0, saw_tooth_array[int_read_index], saw_tooth_array[int_read_index_next], frac_read_index);
-			else 
-				out_sample = linear_interpolation(0.0, 1.0, saw_tooth_array_bl5[int_read_index], saw_tooth_array_bl5[int_read_index_next], frac_read_index);
-		else if (compareEnumToInt(osc_type_guiEnum::tri, osc_type_gui))
-			//triangular
-			if (compareEnumToInt(osc_mode_guiEnum::normal, osc_mode_gui))
-				out_sample = linear_interpolation(0.0, 1.0, triangle_array[int_read_index], triangle_array[int_read_index_next], frac_read_index);
-			else
-				out_sample = linear_interpolation(0.0, 1.0, triangle_array_bl5[int_read_index], triangle_array_bl5[int_read_index_next], frac_read_index);
-		else if (compareEnumToInt(osc_type_guiEnum::square, osc_type_gui))
-			//square
-			if (compareEnumToInt(osc_mode_guiEnum::normal, osc_mode_gui))
-				out_sample = linear_interpolation(0.0, 1.0, square_array[int_read_index], square_array[int_read_index_next], frac_read_index);
-			else 
-				out_sample = linear_interpolation(0.0, 1.0, square_array_bl5[int_read_index], square_array_bl5[int_read_index_next], frac_read_index);
+		//Oscillator 1
+		if (start_osc_1_gui == 1) {
+			if (compareEnumToInt(osc_1_type_guiEnum::sine, osc_1_type_gui))
+				//sine
+				out_sample_osc_1 = linear_interpolation(0.0, 1.0, sin_array[int_read_index_osc_1], sin_array[int_read_index_next_osc_1], frac_read_index_osc_1);
+			else if (compareEnumToInt(osc_1_type_guiEnum::saw, osc_1_type_gui))
+				//saw
+				if (compareEnumToInt(osc_1_mode_guiEnum::normal, osc_1_mode_gui))
+					out_sample_osc_1 = linear_interpolation(0.0, 1.0, saw_tooth_array[int_read_index_osc_1], saw_tooth_array[int_read_index_next_osc_1], frac_read_index_osc_1);
+				else
+					out_sample_osc_1 = linear_interpolation(0.0, 1.0, saw_tooth_array_bl5[int_read_index_osc_1], saw_tooth_array_bl5[int_read_index_next_osc_1], frac_read_index_osc_1);
+			else if (compareEnumToInt(osc_1_type_guiEnum::tri, osc_1_type_gui))
+				//triangular
+				if (compareEnumToInt(osc_1_mode_guiEnum::normal, osc_1_mode_gui))
+					out_sample_osc_1 = linear_interpolation(0.0, 1.0, triangle_array[int_read_index_osc_1], triangle_array[int_read_index_next_osc_1], frac_read_index_osc_1);
+				else
+					out_sample_osc_1 = linear_interpolation(0.0, 1.0, triangle_array_bl5[int_read_index_osc_1], triangle_array_bl5[int_read_index_next_osc_1], frac_read_index_osc_1);
+			else if (compareEnumToInt(osc_1_type_guiEnum::square, osc_1_type_gui))
+				//square
+				if (compareEnumToInt(osc_1_mode_guiEnum::normal, osc_1_mode_gui))
+					out_sample_osc_1 = linear_interpolation(0.0, 1.0, square_array[int_read_index_osc_1], square_array[int_read_index_next_osc_1], frac_read_index_osc_1);
+				else
+					out_sample_osc_1 = linear_interpolation(0.0, 1.0, square_array_bl5[int_read_index_osc_1], square_array_bl5[int_read_index_next_osc_1], frac_read_index_osc_1);
+		}
+
+		//Oscillator 2
+		if (start_osc_2_gui == 1) {
+			if (compareEnumToInt(osc_2_type_guiEnum::sine, osc_2_type_gui))
+				//sine
+				out_sample_osc_2 = linear_interpolation(0.0, 1.0, sin_array[int_read_index_osc_2], sin_array[int_read_index_next_osc_2], frac_read_index_osc_2);
+			else if (compareEnumToInt(osc_2_type_guiEnum::saw, osc_2_type_gui))
+				//saw
+				if (compareEnumToInt(osc_2_mode_guiEnum::normal, osc_2_mode_gui))
+					out_sample_osc_2 = linear_interpolation(0.0, 1.0, saw_tooth_array[int_read_index_osc_2], saw_tooth_array[int_read_index_next_osc_2], frac_read_index_osc_2);
+				else
+					out_sample_osc_2 = linear_interpolation(0.0, 1.0, saw_tooth_array_bl5[int_read_index_osc_2], saw_tooth_array_bl5[int_read_index_next_osc_2], frac_read_index_osc_2);
+			else if (compareEnumToInt(osc_2_type_guiEnum::tri, osc_2_type_gui))
+				//triangular
+				if (compareEnumToInt(osc_2_mode_guiEnum::normal, osc_2_mode_gui))
+					out_sample_osc_2 = linear_interpolation(0.0, 1.0, triangle_array[int_read_index_osc_2], triangle_array[int_read_index_next_osc_2], frac_read_index_osc_2);
+				else
+					out_sample_osc_2 = linear_interpolation(0.0, 1.0, triangle_array_bl5[int_read_index_osc_2], triangle_array_bl5[int_read_index_next_osc_2], frac_read_index_osc_2);
+			else if (compareEnumToInt(osc_2_type_guiEnum::square, osc_2_type_gui))
+				//square
+				if (compareEnumToInt(osc_2_mode_guiEnum::normal, osc_2_mode_gui))
+					out_sample_osc_2 = linear_interpolation(0.0, 1.0, square_array[int_read_index_osc_2], square_array[int_read_index_next_osc_2], frac_read_index_osc_2);
+				else
+					out_sample_osc_2 = linear_interpolation(0.0, 1.0, square_array_bl5[int_read_index_osc_2], square_array_bl5[int_read_index_next_osc_2], frac_read_index_osc_2);
+		}
+
 		// add increment 
-		read_index += inc;
+		read_index_osc_1 += inc_osc_1;
+		read_index_osc_2 += inc_osc_2;
 
 		//check the wrap
-		if (read_index > 1024.0)
-			read_index = read_index - 1024.0;
+		if (read_index_osc_1 > 1024.0)
+			read_index_osc_1 = read_index_osc_1 - 1024.0;
+		if (read_index_osc_2 > 1024.0)
+			read_index_osc_2 = read_index_osc_2 - 1024.0;
 
+		//Volume
+		final_out_sample = (volume_osc_1_gui / 2.0)*out_sample_osc_1 + (volume_osc_2_gui / 2.0)*out_sample_osc_2;
+		
 		//write out
-		processFrameInfo.audioOutputFrame[0] = master_volume_left*out_sample;
+		processFrameInfo.audioOutputFrame[0] = final_out_sample;
 		if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
-			processFrameInfo.audioOutputFrame[1] = master_volume_right*out_sample;
+			processFrameInfo.audioOutputFrame[1] = final_out_sample;
 
 		return true;	/// processed
 
-		//update oscillator memory blocks
-		//y_z2_osc = y_z1_osc;
-		//y_z1_osc = yn_osc;
 	}
 
 
@@ -546,100 +543,15 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
        processFrameInfo.channelIOConfig.outputChannelFormat == kCFMono)
     {
 		// --- pass through code: change this with your signal processing
-
-		//Feed-Forward Filter 
-
-		if (compareEnumToInt(filter_selection_guiEnum::FF_Filter, filter_selection_gui)) 
-		{
-			// Input sample is x(n)
-			xn_left_ff_filter = processFrameInfo.audioInputFrame[0];
-
-			//Delay sample is x(n - 1)
-			xn_1_left_ff_filter = z1_left_ff_filter;
-
-			//Difference Equation
-			yn_left_ff_filter = a0_left_ff_filter * xn_left_ff_filter + a1_left_ff_filter * xn_1_left_ff_filter;
-
-			//Delay with current x(n)
-			z1_left_ff_filter = xn_left_ff_filter;
-
-			//Output sample is y(n)
-			processFrameInfo.audioOutputFrame[0] = yn_left_ff_filter * master_volume_left;
-		}
-
-		//Feed-back Filter 
-
-		if (compareEnumToInt(filter_selection_guiEnum::FB_Filter, filter_selection_gui))
-		{
-			// Input sample is x(n)
-			xn_left_fb_filter = processFrameInfo.audioInputFrame[0];
-
-			//Delay sample is y(n - 1)
-			yn_1_left_fb_filter = z1_left_fb_filter;
-
-			//Difference Equation
-			yn_left_fb_filter = a0_left_fb_filter * xn_left_fb_filter - b1_left_fb_filter * yn_1_left_fb_filter;
-
-			//Delay with current y(n)
-			z1_left_fb_filter = yn_left_fb_filter;
-
-			//Output sample is y(n)
-			processFrameInfo.audioOutputFrame[0] = yn_left_fb_filter * master_volume_left;
-		}
-
-        return true; /// processed
+		return true; /// processed
+		
     }
 
     // --- Mono-In/Stereo-Out
     else if(processFrameInfo.channelIOConfig.inputChannelFormat == kCFMono &&
        processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
     {
-		// --- pass through code: change this with your signal processing
-
-		//Feed-Forward Filter 
-
-		if (compareEnumToInt(filter_selection_guiEnum::FF_Filter, filter_selection_gui))
-		{
-			// Input sample is x(n)
-			xn_left_ff_filter = processFrameInfo.audioInputFrame[0];
-
-			//Delay sample is x(n - 1)
-			xn_1_left_ff_filter = z1_left_ff_filter;
-
-			//Difference Equation
-			yn_left_ff_filter = a0_left_ff_filter * xn_left_ff_filter + a1_left_ff_filter * xn_1_left_ff_filter;
-
-			//Delay with current x(n)
-			z1_left_ff_filter = xn_left_ff_filter;
-
-			//Output sample is y(n)
-			yn_right_ff_filter = yn_left_ff_filter;
-			processFrameInfo.audioOutputFrame[0] = yn_left_ff_filter * master_volume_left;
-			processFrameInfo.audioOutputFrame[1] = yn_right_ff_filter * master_volume_right;
-		}
-
-		//Feed-back Filter 
-
-		if (compareEnumToInt(filter_selection_guiEnum::FB_Filter, filter_selection_gui))
-		{
-			// Input sample is x(n)
-			xn_left_fb_filter = processFrameInfo.audioInputFrame[0];
-
-			//Delay sample is y(n - 1)
-			yn_1_left_fb_filter = z1_left_fb_filter;
-
-			//Difference Equation
-			yn_left_fb_filter = a0_left_fb_filter * xn_left_fb_filter - b1_left_fb_filter * yn_1_left_fb_filter;
-
-			//Delay with current y(n)
-			z1_left_fb_filter = yn_left_fb_filter;
-
-			//Output sample is y(n)
-			yn_right_fb_filter = yn_left_fb_filter;
-			processFrameInfo.audioOutputFrame[0] = yn_left_fb_filter * master_volume_left;
-			processFrameInfo.audioOutputFrame[1] = yn_right_fb_filter * master_volume_right;
-		}
-
+		
 		return true; /// processed
     }
 
@@ -648,55 +560,7 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
        processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
     {
 		// --- pass through code: change this with your signal processing
-
-		//Feed-Forward Filter 
-
-		if (compareEnumToInt(filter_selection_guiEnum::FF_Filter, filter_selection_gui))
-		{
-			// Input sample is x(n)
-			xn_left_ff_filter = processFrameInfo.audioInputFrame[0];
-			xn_right_ff_filter = processFrameInfo.audioInputFrame[1];
-
-			//Delay sample is x(n - 1)
-			xn_1_left_ff_filter = z1_left_ff_filter;
-			xn_1_right_ff_filter = z1_right_ff_filter;
-
-			//Difference Equation
-			yn_left_ff_filter = a0_left_ff_filter * xn_left_ff_filter + a1_left_ff_filter * xn_1_left_ff_filter;
-			yn_right_ff_filter = a0_right_ff_filter * xn_right_ff_filter + a1_right_ff_filter * xn_1_right_ff_filter;
-
-			//Delay with current x(n)
-			z1_left_ff_filter = xn_left_ff_filter;
-			z1_right_ff_filter = xn_right_ff_filter;
-
-			//Output sample is y(n)
-			processFrameInfo.audioOutputFrame[0] = yn_left_ff_filter * master_volume_left;
-			processFrameInfo.audioOutputFrame[1] = yn_right_ff_filter * master_volume_right;
-		}
-
-		if (compareEnumToInt(filter_selection_guiEnum::FB_Filter, filter_selection_gui))
-		{
-			// Input sample is x(n)
-			xn_left_fb_filter = processFrameInfo.audioInputFrame[0];
-			xn_right_fb_filter = processFrameInfo.audioInputFrame[1];
-
-			//Delay sample is y(n - 1)
-			yn_1_left_fb_filter = z1_left_fb_filter;
-			yn_1_right_fb_filter = z1_right_fb_filter;
-
-			//Difference Equation
-			yn_left_fb_filter = a0_left_fb_filter * xn_left_fb_filter - b1_left_fb_filter * yn_1_left_fb_filter;
-			yn_right_fb_filter = a0_right_fb_filter * xn_right_fb_filter - b1_right_fb_filter * yn_1_right_fb_filter;
-
-			//Delay with current y(n)
-			z1_left_fb_filter = yn_left_fb_filter;
-			z1_right_fb_filter = yn_right_fb_filter;
-
-			//Output sample is y(n)
-			processFrameInfo.audioOutputFrame[0] = yn_left_fb_filter * master_volume_left;
-			processFrameInfo.audioOutputFrame[1] = yn_right_fb_filter * master_volume_right;
-		}
-
+		
         return true; /// processed
     }
 
@@ -791,55 +655,44 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
     //     for the Parameter involved
     switch(controlID)
     {
-        case 0:
-        {	
-			// direct map to the a1 ff filter knob
-			a1_left_ff_filter = a1_ff_filter_gui;
-			a1_right_ff_filter = a1_ff_filter_gui;
-			break;
-        }
-
-		case 2:
-		{
-			//freq
-			cook_frequency();
-			break;
-		}
-
+        
 		case 10:
 		{
-			// direct map to the a0 ff filter knob
-			a0_left_ff_filter = a0_ff_filter_gui;
-			a0_right_ff_filter = a0_ff_filter_gui;
-			break;
-		}
-
-		case 12:
-		{	
-			//if oscillator is started
-			if (start_osc_gui == 1) {
+			//if oscillator 1 is started
+			if (start_osc_1_gui == 1) {
 				//reset(); //this caused a reset every ~66th sample period. 
-				cook_frequency();
+				cook_frequency_osc_1();
 			}
 
 			break;
 		}
 
-		case 20:
-		{
-			// direct map to the a0 fb filter knob
-			a0_left_fb_filter = a0_fb_filter_gui;
-			a0_right_fb_filter = a0_fb_filter_gui;
+
+		case 12:
+		{	
+			//freq
+			cook_frequency_osc_1();
 			break;
 		}
 
-		case 30:
+		case 20:
 		{
-			// direct map to the b1 fb filter knob
-			b1_left_fb_filter = b1_fb_filter_gui;
-			b1_right_fb_filter = b1_fb_filter_gui;
+			//if oscillator 2 is started
+			if (start_osc_2_gui == 1) {
+				//reset(); //this caused a reset every ~66th sample period. 
+				cook_frequency_osc_2();
+			}
+
 			break;
 		}
+
+		case 22:
+		{
+			//freq
+			cook_frequency_osc_2();
+			break;
+		}
+
 
         default:
 			break;
@@ -997,16 +850,16 @@ bool PluginCore::initPluginPresets()
 	// --- Preset: Factory Preset
 	preset = new PresetInfo(index++, "Factory Preset");
 	initPresetParameters(preset->presetParameters);
-	setPresetParameter(preset->presetParameters, controlID::a1_ff_filter_gui, 0.000000);
-	setPresetParameter(preset->presetParameters, controlID::volume_gui, 0.707000);
-	setPresetParameter(preset->presetParameters, controlID::a0_ff_filter_gui, 1.000000);
-	setPresetParameter(preset->presetParameters, controlID::a0_fb_filter_gui, 1.000000);
-	setPresetParameter(preset->presetParameters, controlID::filter_selection_gui, -0.000000);
-	setPresetParameter(preset->presetParameters, controlID::frequency_osc_gui, 440.000000);
-	setPresetParameter(preset->presetParameters, controlID::start_osc_gui, -0.000000);
-	setPresetParameter(preset->presetParameters, controlID::b1_fb_filter_gui, 0.000000);
-	setPresetParameter(preset->presetParameters, controlID::osc_type_gui, -0.000000);
-	setPresetParameter(preset->presetParameters, controlID::osc_mode_gui, 0.000000);
+	setPresetParameter(preset->presetParameters, controlID::volume_osc_1_gui, 0.707000);
+	setPresetParameter(preset->presetParameters, controlID::frequency_osc_1_gui, 440.000000);
+	setPresetParameter(preset->presetParameters, controlID::start_osc_1_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::osc_1_type_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::osc_1_mode_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::start_osc_2_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::frequency_osc_2_gui, 440.000000);
+	setPresetParameter(preset->presetParameters, controlID::osc_2_type_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::osc_2_mode_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::volume_osc_2_gui, 0.000000);
 	addPreset(preset);
 
 
@@ -1077,40 +930,20 @@ int32_t PluginCore::getFourCharCode(){ return kFourCharCode; }
 
 // --- user defined functions --------------------------------------------- //
 
-void PluginCore::cook_frequency() 
+void PluginCore::cook_frequency_osc_1() 
 {
 	//inc = L*fd/fs
 
-	inc = 1024.0 * frequency_osc_gui / getSampleRate();
+	inc_osc_1 = 1024.0 * frequency_osc_1_gui / getSampleRate();
 
-	//Oscillation Rate = theta = wT = w/fs 
-	//double wT = (kTwoPi*frequency_osc_gui)/getSampleRate();
+}
 
-	//coefficients according to design equations
-	//b1_osc = -2.0 * cos(wT);
-	//b2_osc = 1.0;
+void PluginCore::cook_frequency_osc_2()
+{
+	//inc = L*fd/fs
 
-	//set initial conditions
-	//y_z1_osc = sin(-1.0 * wT);	// sin(w(-1)T)
-	//y_z2_osc = sin(-2.0 * wT);	// sin(w(-2)T)
+	inc_osc_2 = 1024.0 * frequency_osc_2_gui / getSampleRate();
 
-	//re calculate new initial conditions
-	//double wnT1 = asin(y_z1_osc);
-	////find n
-	//double n = wnT1 / wT;
-
-	//asin will only return values from -pi/2 to pi/2 
-	//(a sine wave in this range only includes a rising edge)
-	//If we are on a rising edge, use the value 1T behind. 
-	//On the other hand, on a falling edge the value 1T ahead is
-	//equivalent to the 1T behind.
-	//if (y_z1_osc > y_z2_osc)
-	//	n -= 1;
-	//else
-	//	n += 1;
-
-	////calculate the new sample
-	//y_z2_osc = sin((n)*wT);
 }
 
 
