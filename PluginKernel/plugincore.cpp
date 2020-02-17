@@ -133,6 +133,32 @@ bool PluginCore::initPluginParameters()
 	piParam->setBoundVariable(&volume_osc_2_gui, boundVariableType::kDouble);
 	addPluginParameter(piParam);
 
+	// --- discrete control: Start LFO 1
+	piParam = new PluginParameter(controlID::start_LFO_1_gui, "Start LFO 1", "SWITCH OFF,SWITCH ON", "SWITCH OFF");
+	piParam->setBoundVariable(&start_LFO_1_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- discrete control: Start LFO 2
+	piParam = new PluginParameter(controlID::start_LFO_2_gui, "Start LFO 2", "SWITCH OFF,SWITCH ON", "SWITCH OFF");
+	piParam->setBoundVariable(&start_LFO_2_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Freq LFO 1
+	piParam = new PluginParameter(controlID::frequency_LFO_1_gui, "Freq LFO 1", "Hz", controlVariableType::kDouble, 1.000000, 20.000000, 10.000000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&frequency_LFO_1_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Freq LFO 2
+	piParam = new PluginParameter(controlID::frequency_LFO_2_gui, "Freq LFO 2", "Hz", controlVariableType::kDouble, 1.000000, 20.000000, 10.000000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&frequency_LFO_2_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
 	// --- Aux Attributes
 	AuxParameterAttribute auxAttribute;
 
@@ -186,6 +212,26 @@ bool PluginCore::initPluginParameters()
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(2147483702);
 	setParamAuxAttribute(controlID::volume_osc_2_gui, auxAttribute);
+
+	// --- controlID::start_LFO_1_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(1073741824);
+	setParamAuxAttribute(controlID::start_LFO_1_gui, auxAttribute);
+
+	// --- controlID::start_LFO_2_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(1073741824);
+	setParamAuxAttribute(controlID::start_LFO_2_gui, auxAttribute);
+
+	// --- controlID::frequency_LFO_1_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483680);
+	setParamAuxAttribute(controlID::frequency_LFO_1_gui, auxAttribute);
+
+	// --- controlID::frequency_LFO_2_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483680);
+	setParamAuxAttribute(controlID::frequency_LFO_2_gui, auxAttribute);
 
 
 	// **--0xEDA5--**
@@ -347,10 +393,14 @@ bool PluginCore::initialize(PluginInfo& pluginInfo)
 	reset();
 	inc_osc_1 = 0.0;
 	inc_osc_2 = 0.0;
+	inc_LFO_1 = 0.0;
+	inc_LFO_2 = 0.0;
 
 	// initialize inc
-	cook_frequency_osc_1();
-	cook_frequency_osc_2();
+	inc_osc_1 = cook_frequency_osc(frequency_osc_1_gui);
+	inc_osc_2 = cook_frequency_osc(frequency_osc_2_gui);
+	inc_LFO_1 = cook_frequency_osc(frequency_LFO_1_gui);
+	inc_LFO_2 = cook_frequency_osc(frequency_LFO_2_gui);
 
 	return true;
 }
@@ -406,25 +456,10 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 
 	//variables can go here.
 
-	//Oscillators
-	//
-	//Oscillator 1
-	double out_sample_osc_1;
-	int int_read_index_osc_1;
-	double frac_read_index_osc_1;
-	int int_read_index_next_osc_1;
-
-	//Oscillator 2
-	double out_sample_osc_2;
-	int int_read_index_osc_2;
-	double frac_read_index_osc_2;
-	int int_read_index_next_osc_2;
-
-	//
 	double final_out_sample;
+
 	//Volume
-	//double master_volume_left = volume_osc_1_gui;
-	//double master_volume_right = volume_osc_1_gui;
+	
 
     // --- decode the channelIOConfiguration and process accordingly
     //
@@ -443,87 +478,28 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 			return true;	/// processed
 		}
 
+		//intermediate variables
+		double yn_osc_1 = 0;
+		double yn_osc_2 = 0;
+		double yn_LFO_1 = 0;
+		double yn_LFO_2 = 0;
 
-		// output value for this cycle
-		out_sample_osc_1 = 0;
-		out_sample_osc_2 = 0;
+		//call the oscillator function
+		do_oscillate(&yn_osc_1, &yn_osc_2);
+		
 
-		// get integer part
-		int_read_index_osc_1 = (int) read_index_osc_1;
-		int_read_index_osc_2 = (int)read_index_osc_2;
+		//call the LFO function
+		do_LFO(&yn_LFO_1, &yn_LFO_2);
 
-		//get fractional part
-		frac_read_index_osc_1 = read_index_osc_1 - (double) int_read_index_osc_1;
-		frac_read_index_osc_2 = read_index_osc_2 - (double)int_read_index_osc_2;
-
-		//second index for interpolation: wrap around buffer if needed
-		int_read_index_next_osc_1 = int_read_index_osc_1 + 1 > 1023 ? 0 : int_read_index_osc_1 + 1;
-		int_read_index_next_osc_2 = int_read_index_osc_2 + 1 > 1023 ? 0 : int_read_index_osc_2 + 1;
-
-		// interpolate the output
-
-		//Oscillator 1
-		if (start_osc_1_gui == 1) {
-			if (compareEnumToInt(osc_1_type_guiEnum::sine, osc_1_type_gui))
-				//sine
-				out_sample_osc_1 = linear_interpolation(0.0, 1.0, sin_array[int_read_index_osc_1], sin_array[int_read_index_next_osc_1], frac_read_index_osc_1);
-			else if (compareEnumToInt(osc_1_type_guiEnum::saw, osc_1_type_gui))
-				//saw
-				if (compareEnumToInt(osc_1_mode_guiEnum::normal, osc_1_mode_gui))
-					out_sample_osc_1 = linear_interpolation(0.0, 1.0, saw_tooth_array[int_read_index_osc_1], saw_tooth_array[int_read_index_next_osc_1], frac_read_index_osc_1);
-				else
-					out_sample_osc_1 = linear_interpolation(0.0, 1.0, saw_tooth_array_bl5[int_read_index_osc_1], saw_tooth_array_bl5[int_read_index_next_osc_1], frac_read_index_osc_1);
-			else if (compareEnumToInt(osc_1_type_guiEnum::tri, osc_1_type_gui))
-				//triangular
-				if (compareEnumToInt(osc_1_mode_guiEnum::normal, osc_1_mode_gui))
-					out_sample_osc_1 = linear_interpolation(0.0, 1.0, triangle_array[int_read_index_osc_1], triangle_array[int_read_index_next_osc_1], frac_read_index_osc_1);
-				else
-					out_sample_osc_1 = linear_interpolation(0.0, 1.0, triangle_array_bl5[int_read_index_osc_1], triangle_array_bl5[int_read_index_next_osc_1], frac_read_index_osc_1);
-			else if (compareEnumToInt(osc_1_type_guiEnum::square, osc_1_type_gui))
-				//square
-				if (compareEnumToInt(osc_1_mode_guiEnum::normal, osc_1_mode_gui))
-					out_sample_osc_1 = linear_interpolation(0.0, 1.0, square_array[int_read_index_osc_1], square_array[int_read_index_next_osc_1], frac_read_index_osc_1);
-				else
-					out_sample_osc_1 = linear_interpolation(0.0, 1.0, square_array_bl5[int_read_index_osc_1], square_array_bl5[int_read_index_next_osc_1], frac_read_index_osc_1);
-		}
-
-		//Oscillator 2
-		if (start_osc_2_gui == 1) {
-			if (compareEnumToInt(osc_2_type_guiEnum::sine, osc_2_type_gui))
-				//sine
-				out_sample_osc_2 = linear_interpolation(0.0, 1.0, sin_array[int_read_index_osc_2], sin_array[int_read_index_next_osc_2], frac_read_index_osc_2);
-			else if (compareEnumToInt(osc_2_type_guiEnum::saw, osc_2_type_gui))
-				//saw
-				if (compareEnumToInt(osc_2_mode_guiEnum::normal, osc_2_mode_gui))
-					out_sample_osc_2 = linear_interpolation(0.0, 1.0, saw_tooth_array[int_read_index_osc_2], saw_tooth_array[int_read_index_next_osc_2], frac_read_index_osc_2);
-				else
-					out_sample_osc_2 = linear_interpolation(0.0, 1.0, saw_tooth_array_bl5[int_read_index_osc_2], saw_tooth_array_bl5[int_read_index_next_osc_2], frac_read_index_osc_2);
-			else if (compareEnumToInt(osc_2_type_guiEnum::tri, osc_2_type_gui))
-				//triangular
-				if (compareEnumToInt(osc_2_mode_guiEnum::normal, osc_2_mode_gui))
-					out_sample_osc_2 = linear_interpolation(0.0, 1.0, triangle_array[int_read_index_osc_2], triangle_array[int_read_index_next_osc_2], frac_read_index_osc_2);
-				else
-					out_sample_osc_2 = linear_interpolation(0.0, 1.0, triangle_array_bl5[int_read_index_osc_2], triangle_array_bl5[int_read_index_next_osc_2], frac_read_index_osc_2);
-			else if (compareEnumToInt(osc_2_type_guiEnum::square, osc_2_type_gui))
-				//square
-				if (compareEnumToInt(osc_2_mode_guiEnum::normal, osc_2_mode_gui))
-					out_sample_osc_2 = linear_interpolation(0.0, 1.0, square_array[int_read_index_osc_2], square_array[int_read_index_next_osc_2], frac_read_index_osc_2);
-				else
-					out_sample_osc_2 = linear_interpolation(0.0, 1.0, square_array_bl5[int_read_index_osc_2], square_array_bl5[int_read_index_next_osc_2], frac_read_index_osc_2);
-		}
-
-		// add increment 
-		read_index_osc_1 += inc_osc_1;
-		read_index_osc_2 += inc_osc_2;
-
-		//check the wrap
-		if (read_index_osc_1 > 1024.0)
-			read_index_osc_1 = read_index_osc_1 - 1024.0;
-		if (read_index_osc_2 > 1024.0)
-			read_index_osc_2 = read_index_osc_2 - 1024.0;
-
-		//Volume
-		final_out_sample = (volume_osc_1_gui / 2.0)*out_sample_osc_1 + (volume_osc_2_gui / 2.0)*out_sample_osc_2;
+		//Amplitude modulation
+		if ((start_LFO_1_gui == 1) && (start_LFO_2_gui == 0))
+			final_out_sample = ((volume_osc_1_gui* yn_LFO_1) / 2.0) * yn_osc_1 + ((volume_osc_2_gui) / 2.0) * yn_osc_2;
+		else if ((start_LFO_1_gui == 0) && (start_LFO_2_gui == 1))
+			final_out_sample = ((volume_osc_1_gui) / 2.0) * yn_osc_1 + ((volume_osc_2_gui* yn_LFO_2) / 2.0) * yn_osc_2;
+		else if ((start_LFO_1_gui == 1) && (start_LFO_2_gui == 1))
+			final_out_sample = ((volume_osc_1_gui* yn_LFO_1) / 2.0) * yn_osc_1 + ((volume_osc_2_gui * yn_LFO_2) / 2.0) * yn_osc_2;
+		else
+			final_out_sample = ((volume_osc_1_gui ) / 2.0)*yn_osc_1 + ((volume_osc_2_gui) / 2.0)*yn_osc_2;
 		
 		//write out
 		processFrameInfo.audioOutputFrame[0] = final_out_sample;
@@ -659,11 +635,9 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
 		case 10:
 		{
 			//if oscillator 1 is started
-			if (start_osc_1_gui == 1) {
+			if (start_osc_1_gui == 1) 
 				//reset(); //this caused a reset every ~66th sample period. 
-				cook_frequency_osc_1();
-			}
-
+				inc_osc_1 = cook_frequency_osc(frequency_osc_1_gui);
 			break;
 		}
 
@@ -671,25 +645,57 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
 		case 12:
 		{	
 			//freq
-			cook_frequency_osc_1();
+			inc_osc_1 = cook_frequency_osc(frequency_osc_1_gui);
 			break;
 		}
+
+
+		case 17:
+		{
+			//if LFO 1 is started
+			if (start_LFO_1_gui == 1) {
+				inc_LFO_1 = cook_frequency_osc(frequency_LFO_1_gui);
+			}
+
+			break;
+		}
+
+		case 18:
+		{
+			//freq
+			inc_LFO_1 = cook_frequency_osc(frequency_LFO_1_gui);
+			break;
+		}
+
 
 		case 20:
 		{
 			//if oscillator 2 is started
-			if (start_osc_2_gui == 1) {
+			if (start_osc_2_gui == 1) 
 				//reset(); //this caused a reset every ~66th sample period. 
-				cook_frequency_osc_2();
-			}
-
+				inc_osc_2 = cook_frequency_osc(frequency_osc_2_gui);
 			break;
 		}
 
 		case 22:
 		{
 			//freq
-			cook_frequency_osc_2();
+			inc_osc_2 = cook_frequency_osc(frequency_osc_2_gui);
+			break;
+		}
+
+		case 27:
+		{
+			//if LFO 2 is started
+			if (start_LFO_2_gui == 1) 
+				inc_LFO_2 = cook_frequency_osc(frequency_LFO_2_gui);
+			break;
+		}
+
+		case 28:
+		{
+			//freq
+			inc_LFO_2 = cook_frequency_osc(frequency_LFO_2_gui);
 			break;
 		}
 
@@ -859,7 +865,11 @@ bool PluginCore::initPluginPresets()
 	setPresetParameter(preset->presetParameters, controlID::frequency_osc_2_gui, 440.000000);
 	setPresetParameter(preset->presetParameters, controlID::osc_2_type_gui, -0.000000);
 	setPresetParameter(preset->presetParameters, controlID::osc_2_mode_gui, -0.000000);
-	setPresetParameter(preset->presetParameters, controlID::volume_osc_2_gui, 0.000000);
+	setPresetParameter(preset->presetParameters, controlID::volume_osc_2_gui, 0.707000);
+	setPresetParameter(preset->presetParameters, controlID::start_LFO_1_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::start_LFO_2_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::frequency_LFO_1_gui, 10.000000);
+	setPresetParameter(preset->presetParameters, controlID::frequency_LFO_2_gui, 10.000000);
 	addPreset(preset);
 
 
@@ -930,21 +940,14 @@ int32_t PluginCore::getFourCharCode(){ return kFourCharCode; }
 
 // --- user defined functions --------------------------------------------- //
 
-void PluginCore::cook_frequency_osc_1() 
+double PluginCore::cook_frequency_osc(double frequency_osc) 
 {
 	//inc = L*fd/fs
-
-	inc_osc_1 = 1024.0 * frequency_osc_1_gui / getSampleRate();
-
+	double inc_osc = 0.0;
+	inc_osc = 1024.0 * frequency_osc / getSampleRate();
+	return inc_osc;
 }
 
-void PluginCore::cook_frequency_osc_2()
-{
-	//inc = L*fd/fs
-
-	inc_osc_2 = 1024.0 * frequency_osc_2_gui / getSampleRate();
-
-}
 
 
 double PluginCore::linear_interpolation(double x1, double x2, double y1, double y2, double frac)
@@ -954,4 +957,170 @@ double PluginCore::linear_interpolation(double x1, double x2, double y1, double 
 	double y = y2 - ( m * (x2 - frac));
 
 	return y;
+}
+
+void PluginCore::do_oscillate(double *yn_1, double *yn_2)
+{
+	*yn_1 = 0.0;
+	*yn_2 = 0.0;
+
+	//Oscillator 1
+	double out_sample_osc_1;
+	int int_read_index_osc_1;
+	double frac_read_index_osc_1;
+	int int_read_index_next_osc_1;
+
+	//Oscillator 2
+	double out_sample_osc_2;
+	int int_read_index_osc_2;
+	double frac_read_index_osc_2;
+	int int_read_index_next_osc_2;
+
+	// output value for this cycle
+	out_sample_osc_1 = 0;
+	out_sample_osc_2 = 0;
+
+	// get integer part
+	int_read_index_osc_1 = (int)read_index_osc_1;
+	int_read_index_osc_2 = (int)read_index_osc_2;
+
+	//get fractional part
+	frac_read_index_osc_1 = read_index_osc_1 - (double)int_read_index_osc_1;
+	frac_read_index_osc_2 = read_index_osc_2 - (double)int_read_index_osc_2;
+
+	//second index for interpolation: wrap around buffer if needed
+	int_read_index_next_osc_1 = int_read_index_osc_1 + 1 > 1023 ? 0 : int_read_index_osc_1 + 1;
+	int_read_index_next_osc_2 = int_read_index_osc_2 + 1 > 1023 ? 0 : int_read_index_osc_2 + 1;
+
+	// interpolate the output
+
+	//Oscillator 1
+	if (start_osc_1_gui == 1) {
+		if (compareEnumToInt(osc_1_type_guiEnum::sine, osc_1_type_gui))
+			//sine
+			out_sample_osc_1 = linear_interpolation(0.0, 1.0, sin_array[int_read_index_osc_1], sin_array[int_read_index_next_osc_1], frac_read_index_osc_1);
+		else if (compareEnumToInt(osc_1_type_guiEnum::saw, osc_1_type_gui))
+			//saw
+			if (compareEnumToInt(osc_1_mode_guiEnum::normal, osc_1_mode_gui))
+				out_sample_osc_1 = linear_interpolation(0.0, 1.0, saw_tooth_array[int_read_index_osc_1], saw_tooth_array[int_read_index_next_osc_1], frac_read_index_osc_1);
+			else
+				out_sample_osc_1 = linear_interpolation(0.0, 1.0, saw_tooth_array_bl5[int_read_index_osc_1], saw_tooth_array_bl5[int_read_index_next_osc_1], frac_read_index_osc_1);
+		else if (compareEnumToInt(osc_1_type_guiEnum::tri, osc_1_type_gui))
+			//triangular
+			if (compareEnumToInt(osc_1_mode_guiEnum::normal, osc_1_mode_gui))
+				out_sample_osc_1 = linear_interpolation(0.0, 1.0, triangle_array[int_read_index_osc_1], triangle_array[int_read_index_next_osc_1], frac_read_index_osc_1);
+			else
+				out_sample_osc_1 = linear_interpolation(0.0, 1.0, triangle_array_bl5[int_read_index_osc_1], triangle_array_bl5[int_read_index_next_osc_1], frac_read_index_osc_1);
+		else if (compareEnumToInt(osc_1_type_guiEnum::square, osc_1_type_gui))
+			//square
+			if (compareEnumToInt(osc_1_mode_guiEnum::normal, osc_1_mode_gui))
+				out_sample_osc_1 = linear_interpolation(0.0, 1.0, square_array[int_read_index_osc_1], square_array[int_read_index_next_osc_1], frac_read_index_osc_1);
+			else
+				out_sample_osc_1 = linear_interpolation(0.0, 1.0, square_array_bl5[int_read_index_osc_1], square_array_bl5[int_read_index_next_osc_1], frac_read_index_osc_1);
+	}
+
+	//Oscillator 2
+	if (start_osc_2_gui == 1) {
+		if (compareEnumToInt(osc_2_type_guiEnum::sine, osc_2_type_gui))
+			//sine
+			out_sample_osc_2 = linear_interpolation(0.0, 1.0, sin_array[int_read_index_osc_2], sin_array[int_read_index_next_osc_2], frac_read_index_osc_2);
+		else if (compareEnumToInt(osc_2_type_guiEnum::saw, osc_2_type_gui))
+			//saw
+			if (compareEnumToInt(osc_2_mode_guiEnum::normal, osc_2_mode_gui))
+				out_sample_osc_2 = linear_interpolation(0.0, 1.0, saw_tooth_array[int_read_index_osc_2], saw_tooth_array[int_read_index_next_osc_2], frac_read_index_osc_2);
+			else
+				out_sample_osc_2 = linear_interpolation(0.0, 1.0, saw_tooth_array_bl5[int_read_index_osc_2], saw_tooth_array_bl5[int_read_index_next_osc_2], frac_read_index_osc_2);
+		else if (compareEnumToInt(osc_2_type_guiEnum::tri, osc_2_type_gui))
+			//triangular
+			if (compareEnumToInt(osc_2_mode_guiEnum::normal, osc_2_mode_gui))
+				out_sample_osc_2 = linear_interpolation(0.0, 1.0, triangle_array[int_read_index_osc_2], triangle_array[int_read_index_next_osc_2], frac_read_index_osc_2);
+			else
+				out_sample_osc_2 = linear_interpolation(0.0, 1.0, triangle_array_bl5[int_read_index_osc_2], triangle_array_bl5[int_read_index_next_osc_2], frac_read_index_osc_2);
+		else if (compareEnumToInt(osc_2_type_guiEnum::square, osc_2_type_gui))
+			//square
+			if (compareEnumToInt(osc_2_mode_guiEnum::normal, osc_2_mode_gui))
+				out_sample_osc_2 = linear_interpolation(0.0, 1.0, square_array[int_read_index_osc_2], square_array[int_read_index_next_osc_2], frac_read_index_osc_2);
+			else
+				out_sample_osc_2 = linear_interpolation(0.0, 1.0, square_array_bl5[int_read_index_osc_2], square_array_bl5[int_read_index_next_osc_2], frac_read_index_osc_2);
+	}
+
+	// add increment 
+	read_index_osc_1 += inc_osc_1;
+	read_index_osc_2 += inc_osc_2;
+
+	//check the wrap
+	if (read_index_osc_1 > 1024.0)
+		read_index_osc_1 = read_index_osc_1 - 1024.0;
+	if (read_index_osc_2 > 1024.0)
+		read_index_osc_2 = read_index_osc_2 - 1024.0;
+
+	//write out 
+	*yn_1 = out_sample_osc_1;
+	*yn_2 = out_sample_osc_2;
+}
+
+void PluginCore::do_LFO(double* yn_1, double* yn_2)
+{
+	*yn_1 = 0.0;
+	*yn_2 = 0.0;
+
+	//Oscillator 1
+	double out_sample_LFO_1;
+	int int_read_index_LFO_1;
+	double frac_read_index_LFO_1;
+	int int_read_index_next_LFO_1;
+
+	//Oscillator 2
+	double out_sample_LFO_2;
+	int int_read_index_LFO_2;
+	double frac_read_index_LFO_2;
+	int int_read_index_next_LFO_2;
+
+	// output value for this cycle
+	out_sample_LFO_1 = 0;
+	out_sample_LFO_2 = 0;
+
+	// get integer part
+	int_read_index_LFO_1 = (int)read_index_LFO_1;
+	int_read_index_LFO_2 = (int)read_index_LFO_2;
+
+	//get fractional part
+	frac_read_index_LFO_1 = read_index_LFO_1 - (double)int_read_index_LFO_1;
+	frac_read_index_LFO_2 = read_index_LFO_2 - (double)int_read_index_LFO_2;
+
+	//second index for interpolation: wrap around buffer if needed
+	int_read_index_next_LFO_1 = int_read_index_LFO_1 + 1 > 1023 ? 0 : int_read_index_LFO_1 + 1;
+	int_read_index_next_LFO_2 = int_read_index_LFO_2 + 1 > 1023 ? 0 : int_read_index_LFO_2 + 1;
+
+	// interpolate the output
+
+	//LFO 1
+	if (start_LFO_1_gui == 1) {
+
+		//sine
+		out_sample_LFO_1 = linear_interpolation(0.0, 1.0, sin_array[int_read_index_LFO_1], sin_array[int_read_index_next_LFO_1], frac_read_index_LFO_1);
+		
+	}
+
+	//Oscillator 2
+	if (start_osc_2_gui == 1) {
+
+		//sine
+		out_sample_LFO_2 = linear_interpolation(0.0, 1.0, sin_array[int_read_index_LFO_2], sin_array[int_read_index_next_LFO_2], frac_read_index_LFO_2);
+		
+	}
+
+	// add increment 
+	read_index_LFO_1 += inc_LFO_1;
+	read_index_LFO_2 += inc_LFO_2;
+
+	//check the wrap
+	if (read_index_LFO_1 > 1024.0)
+		read_index_LFO_1 = read_index_LFO_1 - 1024.0;
+	if (read_index_LFO_2 > 1024.0)
+		read_index_LFO_2 = read_index_LFO_2 - 1024.0;
+
+	//write out 
+	*yn_1 = out_sample_LFO_1;
+	*yn_2 = out_sample_LFO_2;
 }
