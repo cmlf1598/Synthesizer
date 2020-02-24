@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------------
+ // -----------------------------------------------------------------------------
 //    ASPiK Plugin Kernel File:  plugincore.cpp
 //
 /**
@@ -146,17 +146,43 @@ bool PluginCore::initPluginParameters()
 	addPluginParameter(piParam);
 
 	// --- continuous control: Freq LFO 1
-	piParam = new PluginParameter(controlID::frequency_LFO_1_gui, "Freq LFO 1", "Hz", controlVariableType::kDouble, 1.000000, 20.000000, 10.000000, taper::kLinearTaper);
+	piParam = new PluginParameter(controlID::frequency_LFO_1_gui, "Freq LFO 1", "Hz", controlVariableType::kDouble, 0.100000, 20.000000, 10.000000, taper::kLinearTaper);
 	piParam->setParameterSmoothing(true);
 	piParam->setSmoothingTimeMsec(20.00);
 	piParam->setBoundVariable(&frequency_LFO_1_gui, boundVariableType::kDouble);
 	addPluginParameter(piParam);
 
 	// --- continuous control: Freq LFO 2
-	piParam = new PluginParameter(controlID::frequency_LFO_2_gui, "Freq LFO 2", "Hz", controlVariableType::kDouble, 1.000000, 20.000000, 10.000000, taper::kLinearTaper);
+	piParam = new PluginParameter(controlID::frequency_LFO_2_gui, "Freq LFO 2", "Hz", controlVariableType::kDouble, 0.100000, 20.000000, 10.000000, taper::kLinearTaper);
 	piParam->setParameterSmoothing(true);
 	piParam->setSmoothingTimeMsec(20.00);
 	piParam->setBoundVariable(&frequency_LFO_2_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Gain
+	piParam = new PluginParameter(controlID::gain_control_filter_gui, "Gain", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.500000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&gain_control_filter_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Cut-off freq
+	piParam = new PluginParameter(controlID::COF_control_filter_gui, "Cut-off freq", "Hz", controlVariableType::kDouble, 25.000000, 4200.000000, 440.000000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&COF_control_filter_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- discrete control: LFO 1 control
+	piParam = new PluginParameter(controlID::LFO_1_control_gui, "LFO 1 control", "AM,FM", "AM");
+	piParam->setBoundVariable(&LFO_1_control_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- discrete control: LFO 2 control
+	piParam = new PluginParameter(controlID::LFO_2_control_gui, "LFO 2 control", "AM,FM", "AM");
+	piParam->setBoundVariable(&LFO_2_control_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
 	addPluginParameter(piParam);
 
 	// --- Aux Attributes
@@ -233,6 +259,26 @@ bool PluginCore::initPluginParameters()
 	auxAttribute.setUintAttribute(2147483680);
 	setParamAuxAttribute(controlID::frequency_LFO_2_gui, auxAttribute);
 
+	// --- controlID::gain_control_filter_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483702);
+	setParamAuxAttribute(controlID::gain_control_filter_gui, auxAttribute);
+
+	// --- controlID::COF_control_filter_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483702);
+	setParamAuxAttribute(controlID::COF_control_filter_gui, auxAttribute);
+
+	// --- controlID::LFO_1_control_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(268435456);
+	setParamAuxAttribute(controlID::LFO_1_control_gui, auxAttribute);
+
+	// --- controlID::LFO_2_control_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(268435456);
+	setParamAuxAttribute(controlID::LFO_2_control_gui, auxAttribute);
+
 
 	// **--0xEDA5--**
    
@@ -278,6 +324,17 @@ bool PluginCore::initialize(PluginInfo& pluginInfo)
 {
 	// --- add one-time init stuff here
 	
+	//Gain control filter
+	alfa_gain_control_filter = 1.0;
+	a0_gain_control_filter = gain_control_filter_gui;
+	z1_gain_control_filter = 0.0;
+
+	//Cutoff control filter
+
+	fc_COF_control_filter = COF_control_filter_gui;
+	z1_x_COF_control_filter = 0.0;
+	z1_y_COF_control_filter = 0.0;
+
 	//Wave Table Oscillators
 
 	//Triangle wave
@@ -456,7 +513,24 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 
 	//variables can go here.
 
+	double AM_final_out_sample;
+	double AM_1_out_sample;
+	double AM_2_out_sample;
+	double gain_control_sample;
 	double final_out_sample;
+
+	double in_btw_sample_1;
+
+	//Gain control Filter 
+	double xn_gain_control_filter;
+	double xn_1_gain_control_filter;
+	double yn_gain_control_filter;
+
+	//Cut-off frequency control filter
+	double xn_COF_control_filter;
+	double xn_1_COF_control_filter;
+	double yn_COF_control_filter;
+	double yn_1_COF_control_filter;
 
 	//Volume
 	
@@ -484,23 +558,74 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 		double yn_LFO_1 = 0;
 		double yn_LFO_2 = 0;
 
-		//call the oscillator function
-		do_oscillate(&yn_osc_1, &yn_osc_2);
 		
-
 		//call the LFO function
 		do_LFO(&yn_LFO_1, &yn_LFO_2);
 
-		//Amplitude modulation
-		if ((start_LFO_1_gui == 1) && (start_LFO_2_gui == 0))
-			final_out_sample = ((volume_osc_1_gui* yn_LFO_1) / 2.0) * yn_osc_1 + ((volume_osc_2_gui) / 2.0) * yn_osc_2;
-		else if ((start_LFO_1_gui == 0) && (start_LFO_2_gui == 1))
-			final_out_sample = ((volume_osc_1_gui) / 2.0) * yn_osc_1 + ((volume_osc_2_gui* yn_LFO_2) / 2.0) * yn_osc_2;
-		else if ((start_LFO_1_gui == 1) && (start_LFO_2_gui == 1))
-			final_out_sample = ((volume_osc_1_gui* yn_LFO_1) / 2.0) * yn_osc_1 + ((volume_osc_2_gui * yn_LFO_2) / 2.0) * yn_osc_2;
-		else
-			final_out_sample = ((volume_osc_1_gui ) / 2.0)*yn_osc_1 + ((volume_osc_2_gui) / 2.0)*yn_osc_2;
+		//FM
+
+		if ((start_LFO_1_gui == 1) && (compareEnumToInt(LFO_1_control_guiEnum::FM, LFO_1_control_gui)))
+		{
+			inc_osc_1 = cook_frequency_osc(frequency_osc_1_gui + (20.0 * yn_LFO_1));
+		}
+
+		if ((start_LFO_2_gui == 1) && (compareEnumToInt(LFO_2_control_guiEnum::FM, LFO_2_control_gui)))
+		{
+			inc_osc_2 = cook_frequency_osc(frequency_osc_2_gui + (20.0 * yn_LFO_2));
+		}
+
+		//call the oscillator function
+		do_oscillate(&yn_osc_1, &yn_osc_2);
 		
+		//AM
+		if ((start_LFO_1_gui == 1) && (compareEnumToInt(LFO_1_control_guiEnum::AM, LFO_1_control_gui)))
+		{
+			AM_1_out_sample = yn_LFO_1  * yn_osc_1;
+		}
+		else
+		{
+			AM_1_out_sample = yn_osc_1;
+		}
+
+		if ((start_LFO_2_gui == 1) && (compareEnumToInt(LFO_2_control_guiEnum::AM, LFO_2_control_gui)))
+		{
+			AM_2_out_sample = yn_LFO_2  * yn_osc_2;
+		}
+		else
+		{
+			AM_2_out_sample = yn_osc_2;
+		}
+
+		AM_final_out_sample = (volume_osc_1_gui/2) * AM_1_out_sample + (volume_osc_2_gui/2) * AM_2_out_sample;
+		in_btw_sample_1 = AM_final_out_sample;
+
+
+		//Gain control filter 
+
+		// Input sample is x(n)
+		xn_gain_control_filter = in_btw_sample_1;
+		//Delay sample is x(n - 1)
+		xn_1_gain_control_filter = z1_gain_control_filter;
+		//Difference equation
+		yn_gain_control_filter = (a0_gain_control_filter * xn_gain_control_filter) + (alfa_gain_control_filter * xn_1_gain_control_filter);
+		//Delay with current x(n)
+		z1_gain_control_filter = xn_gain_control_filter;
+		
+		gain_control_sample = yn_gain_control_filter;
+
+		//COF control filter
+		
+		//For the Lowpass Filter
+		xn_COF_control_filter = gain_control_sample;
+		xn_1_COF_control_filter = z1_x_COF_control_filter;
+		yn_1_COF_control_filter = z1_y_COF_control_filter;
+		yn_COF_control_filter = b0_COF_control_filter * xn_COF_control_filter + b1_COF_control_filter * xn_1_COF_control_filter
+			- a1_COF_control_filter * yn_1_COF_control_filter;
+		z1_x_COF_control_filter = xn_COF_control_filter;
+		z1_y_COF_control_filter = yn_COF_control_filter;
+
+		final_out_sample = yn_COF_control_filter;
+
 		//write out
 		processFrameInfo.audioOutputFrame[0] = final_out_sample;
 		if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
@@ -699,7 +824,21 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
 			break;
 		}
 
+		case 41:
+		{
+			//freq
+			a0_gain_control_filter = gain_control_filter_gui;
+			break;
+		}
 
+		case 51:
+		{	
+			fc_COF_control_filter = COF_control_filter_gui;
+			K_COF_control_filter = tan((kTwoPi * fc_COF_control_filter) / getSampleRate());
+			b0_COF_control_filter = K_COF_control_filter / (K_COF_control_filter + 1);
+			b1_COF_control_filter = b0_COF_control_filter;
+			a1_COF_control_filter = (K_COF_control_filter - 1) / (K_COF_control_filter + 1);
+		}
         default:
 			break;
     }
@@ -870,6 +1009,10 @@ bool PluginCore::initPluginPresets()
 	setPresetParameter(preset->presetParameters, controlID::start_LFO_2_gui, -0.000000);
 	setPresetParameter(preset->presetParameters, controlID::frequency_LFO_1_gui, 10.000000);
 	setPresetParameter(preset->presetParameters, controlID::frequency_LFO_2_gui, 10.000000);
+	setPresetParameter(preset->presetParameters, controlID::gain_control_filter_gui, 0.500000);
+	setPresetParameter(preset->presetParameters, controlID::COF_control_filter_gui, 440.000000);
+	setPresetParameter(preset->presetParameters, controlID::LFO_1_control_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::LFO_2_control_gui, -0.000000);
 	addPreset(preset);
 
 
@@ -947,7 +1090,6 @@ double PluginCore::cook_frequency_osc(double frequency_osc)
 	inc_osc = 1024.0 * frequency_osc / getSampleRate();
 	return inc_osc;
 }
-
 
 
 double PluginCore::linear_interpolation(double x1, double x2, double y1, double y2, double frac)

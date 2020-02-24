@@ -33,7 +33,11 @@ enum controlID {
 	start_LFO_1_gui = 17,
 	start_LFO_2_gui = 27,
 	frequency_LFO_1_gui = 18,
-	frequency_LFO_2_gui = 28
+	frequency_LFO_2_gui = 28,
+	gain_control_filter_gui = 41,
+	COF_control_filter_gui = 51,
+	LFO_1_control_gui = 19,
+	LFO_2_control_gui = 29
 };
 
 	// **--0x0F1F--**
@@ -117,6 +121,26 @@ public:
 	// --- BEGIN USER VARIABLES AND FUNCTIONS -------------------------------------- //
 	//	   Add your variables and methods here
 
+	//Gain filter
+	double a0_gain_control_filter;
+	double alfa_gain_control_filter;
+	//
+	double z1_gain_control_filter;
+	
+
+	//Cutoff-frequency control filter
+	double fc_COF_control_filter;
+	//
+	double b0_COF_control_filter;
+	double b1_COF_control_filter;
+	double a1_COF_control_filter;
+	//
+	double z1_x_COF_control_filter;
+	double z1_y_COF_control_filter;
+	//
+	double K_COF_control_filter;
+
+
 	//Oscillators
 	//
 	// arrays for the tables
@@ -151,16 +175,19 @@ public:
 	double inc_LFO_1;
 	double inc_LFO_2;
 
+
 	// linear interpolation 
 	double linear_interpolation(double x1, double x2, double y1, double y2, double frac);
 
 	//function to cook frequency and set initial conditions
 	double cook_frequency_osc(double frequency_osc);
+	/*double cook_FM(double LFO_freq);*/
 
 	//
 	void do_oscillate(double* yn_1, double* yn_2);
 
 	void do_LFO(double *yn_1, double *yn_2);
+
 
 	// --- END USER VARIABLES AND FUNCTIONS -------------------------------------- //
 
@@ -174,6 +201,8 @@ private:
 	double volume_osc_2_gui = 0.0;
 	double frequency_LFO_1_gui = 0.0;
 	double frequency_LFO_2_gui = 0.0;
+	double gain_control_filter_gui = 0.0;
+	double COF_control_filter_gui = 0.0;
 
 	// --- Discrete Plugin Variables 
 	int start_osc_1_gui = 0;
@@ -199,6 +228,12 @@ private:
 
 	int start_LFO_2_gui = 0;
 	enum class start_LFO_2_guiEnum { SWITCH_OFF,SWITCH_ON };	// to compare: if(compareEnumToInt(start_LFO_2_guiEnum::SWITCH_OFF, start_LFO_2_gui)) etc... 
+
+	int LFO_1_control_gui = 0;
+	enum class LFO_1_control_guiEnum { AM,FM };	// to compare: if(compareEnumToInt(LFO_1_control_guiEnum::AM, LFO_1_control_gui)) etc... 
+
+	int LFO_2_control_gui = 0;
+	enum class LFO_2_control_guiEnum { AM,FM };	// to compare: if(compareEnumToInt(LFO_2_control_guiEnum::AM, LFO_2_control_gui)) etc... 
 
 	// **--0x1A7F--**
     // --- end member variables
