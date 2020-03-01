@@ -14,7 +14,7 @@
 #define __pluginCore_h__
 
 #include "pluginbase.h"
-
+//#include "synthfunctions.h"
 // **--0x7F1F--**
 
 // --- Plugin Variables controlID Enumeration 
@@ -29,7 +29,6 @@ enum controlID {
 	frequency_osc_2_gui = 22,
 	osc_2_type_gui = 23,
 	osc_2_mode_gui = 24,
-	volume_osc_2_gui = 21,
 	start_LFO_1_gui = 17,
 	start_LFO_2_gui = 27,
 	frequency_LFO_1_gui = 18,
@@ -37,7 +36,8 @@ enum controlID {
 	gain_control_filter_gui = 41,
 	COF_control_filter_gui = 51,
 	LFO_1_control_gui = 19,
-	LFO_2_control_gui = 29
+	LFO_2_control_gui = 29,
+	volume_osc_2_gui = 21
 };
 
 	// **--0x0F1F--**
@@ -126,8 +126,8 @@ public:
 	double alfa_gain_control_filter;
 	//
 	double z1_gain_control_filter;
-	
-
+	//
+	//
 	//Cutoff-frequency control filter
 	double fc_COF_control_filter;
 	//
@@ -139,10 +139,62 @@ public:
 	double z1_y_COF_control_filter;
 	//
 	double K_COF_control_filter;
+	//
+	//
+	//Envelope Generator
+	enum class EG_possible_states
+	{ 
+		off = 1, 
+		attack = 2,
+		decay = 3,
+		sustain = 4,
+		release = 5
+	};
 
+	enum class EG_possible_modes
+	{
+		analog,
+		digital
+	};
 
+	EG_possible_states EG_state_osc_1;
+	EG_possible_states EG_state_osc_2;
+	EG_possible_modes EG_mode;
+	//
+	double EG_default_time = 500;
+	//
+	bool note_on_osc_1;
+	bool note_on_osc_2;
+	bool ringing_osc_1;
+	bool ringing_osc_2;
+	//
+	double attack_offset;
+	double attack_coeff;
+	double attack_time_ms;
+	double attack_TCO;
+	//
+	double decay_offset;
+	double decay_coeff;
+	double decay_time_ms;
+	double decay_TCO;
+	//
+	double sustain_level;
+	//
+	double release_offset;
+	double release_coeff;
+	double release_time_ms;
+	double release_TCO;
+	//
+	double envelope_output_osc_1;
+	double envelope_output_osc_2;
+	//
+	//
 	//Oscillators
 	//
+	//flags
+	bool osc_1_started;
+	bool osc_2_started;
+
 	// arrays for the tables
 	double sin_array[1024];			// 1024 Point Sinusoid 
 	double saw_tooth_array[1024];	// saw
@@ -160,6 +212,7 @@ public:
 	double read_index_LFO_1;
 	double read_index_LFO_2;
 
+
 	// reset the read indexes
 	void reset()
 	{
@@ -169,25 +222,34 @@ public:
 		read_index_LFO_2 = 0.0;
 	}
 
+
 	// increment values
 	double inc_osc_1;
 	double inc_osc_2;
 	double inc_LFO_1;
 	double inc_LFO_2;
-
+	
+	//Functions
 
 	// linear interpolation 
 	double linear_interpolation(double x1, double x2, double y1, double y2, double frac);
 
 	//function to cook frequency and set initial conditions
 	double cook_frequency_osc(double frequency_osc);
-	/*double cook_FM(double LFO_freq);*/
 
-	//
 	void do_oscillate(double* yn_1, double* yn_2);
 
 	void do_LFO(double *yn_1, double *yn_2);
 
+	void do_envelope(EG_possible_states *EG_state, double *envelope_output);
+
+	void init_envelope(void);
+
+	void set_EG_mode(void);
+
+	void calculate_attack_time(void);
+	void calculate_decay_time(void);
+	void calculate_release_time(void);
 
 	// --- END USER VARIABLES AND FUNCTIONS -------------------------------------- //
 
@@ -198,11 +260,11 @@ private:
 	double volume_osc_1_gui = 0.0;
 	double frequency_osc_1_gui = 0.0;
 	double frequency_osc_2_gui = 0.0;
-	double volume_osc_2_gui = 0.0;
 	double frequency_LFO_1_gui = 0.0;
 	double frequency_LFO_2_gui = 0.0;
 	double gain_control_filter_gui = 0.0;
 	double COF_control_filter_gui = 0.0;
+	double volume_osc_2_gui = 0.0;
 
 	// --- Discrete Plugin Variables 
 	int start_osc_1_gui = 0;

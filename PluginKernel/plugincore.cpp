@@ -126,13 +126,6 @@ bool PluginCore::initPluginParameters()
 	piParam->setIsDiscreteSwitch(true);
 	addPluginParameter(piParam);
 
-	// --- continuous control: Vol Osc 2
-	piParam = new PluginParameter(controlID::volume_osc_2_gui, "Vol Osc 2", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.707000, taper::kAntiLogTaper);
-	piParam->setParameterSmoothing(true);
-	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&volume_osc_2_gui, boundVariableType::kDouble);
-	addPluginParameter(piParam);
-
 	// --- discrete control: Start LFO 1
 	piParam = new PluginParameter(controlID::start_LFO_1_gui, "Start LFO 1", "SWITCH OFF,SWITCH ON", "SWITCH OFF");
 	piParam->setBoundVariable(&start_LFO_1_gui, boundVariableType::kInt);
@@ -185,18 +178,25 @@ bool PluginCore::initPluginParameters()
 	piParam->setIsDiscreteSwitch(true);
 	addPluginParameter(piParam);
 
+	// --- continuous control: Vol Osc 2
+	piParam = new PluginParameter(controlID::volume_osc_2_gui, "Vol Osc 2", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.707000, taper::kAntiLogTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&volume_osc_2_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
 	// --- Aux Attributes
 	AuxParameterAttribute auxAttribute;
 
 	// --- RAFX GUI attributes
 	// --- controlID::volume_osc_1_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(2147483702);
+	auxAttribute.setUintAttribute(2147483703);
 	setParamAuxAttribute(controlID::volume_osc_1_gui, auxAttribute);
 
 	// --- controlID::frequency_osc_1_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(2147483680);
+	auxAttribute.setUintAttribute(2147483702);
 	setParamAuxAttribute(controlID::frequency_osc_1_gui, auxAttribute);
 
 	// --- controlID::start_osc_1_gui
@@ -221,7 +221,7 @@ bool PluginCore::initPluginParameters()
 
 	// --- controlID::frequency_osc_2_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(2147483680);
+	auxAttribute.setUintAttribute(2147483702);
 	setParamAuxAttribute(controlID::frequency_osc_2_gui, auxAttribute);
 
 	// --- controlID::osc_2_type_gui
@@ -233,11 +233,6 @@ bool PluginCore::initPluginParameters()
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(268435456);
 	setParamAuxAttribute(controlID::osc_2_mode_gui, auxAttribute);
-
-	// --- controlID::volume_osc_2_gui
-	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(2147483702);
-	setParamAuxAttribute(controlID::volume_osc_2_gui, auxAttribute);
 
 	// --- controlID::start_LFO_1_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
@@ -278,6 +273,11 @@ bool PluginCore::initPluginParameters()
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(268435456);
 	setParamAuxAttribute(controlID::LFO_2_control_gui, auxAttribute);
+
+	// --- controlID::volume_osc_2_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483703);
+	setParamAuxAttribute(controlID::volume_osc_2_gui, auxAttribute);
 
 
 	// **--0xEDA5--**
@@ -330,10 +330,12 @@ bool PluginCore::initialize(PluginInfo& pluginInfo)
 	z1_gain_control_filter = 0.0;
 
 	//Cutoff control filter
-
 	fc_COF_control_filter = COF_control_filter_gui;
 	z1_x_COF_control_filter = 0.0;
 	z1_y_COF_control_filter = 0.0;
+
+	//Initialize envelope generator
+	init_envelope();
 
 	//Wave Table Oscillators
 
@@ -448,6 +450,8 @@ bool PluginCore::initialize(PluginInfo& pluginInfo)
 
 	// clear variables 
 	reset();
+	osc_1_started = false;
+	osc_2_started = false;
 	inc_osc_1 = 0.0;
 	inc_osc_2 = 0.0;
 	inc_LFO_1 = 0.0;
@@ -517,9 +521,11 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 	double AM_1_out_sample;
 	double AM_2_out_sample;
 	double gain_control_sample;
+	double envelope_sample;
 	double final_out_sample;
 
-	double in_btw_sample_1;
+	double in_btw_sample_1_osc_1;
+	double in_btw_sample_1_osc_2;
 
 	//Gain control Filter 
 	double xn_gain_control_filter;
@@ -542,16 +548,50 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 
 	if (getPluginType() == kSynthPlugin)
 	{
-		// --- output silence: change this with your signal render code
-		if ( (start_osc_1_gui == 0) && (start_osc_2_gui == 0) )
+		
+		//Note on/off conditions for osc 1
+		if (start_osc_1_gui == 0)
 		{
-			processFrameInfo.audioOutputFrame[0] = 0.0;
-			if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
-				processFrameInfo.audioOutputFrame[1] = 0.0;
+			if (EG_state_osc_1 == EG_possible_states::off)
+			{
+				osc_1_started = false;
+				ringing_osc_1 = false;
+			}
 
-			return true;	/// processed
+			if (ringing_osc_1 == true)
+			{
+				note_on_osc_1 = false;
+				EG_state_osc_1 = EG_possible_states::release;
+			}
+		} 
+		else
+		{
+			osc_1_started = true;
+			note_on_osc_1 = true;
+		}
+		
+		//Note on/off conditions for osc 2
+		if (start_osc_2_gui == 0)
+		{
+			if (EG_state_osc_2 == EG_possible_states::off)
+			{
+				osc_2_started = false;
+				ringing_osc_2 = false;
+			}
+
+			if (ringing_osc_2 == true)
+			{
+				note_on_osc_2 = false;
+				EG_state_osc_2 = EG_possible_states::release;
+			}
+		} 
+		else
+		{
+			osc_2_started = true;
+			note_on_osc_2 = true;
 		}
 
+		
 		//intermediate variables
 		double yn_osc_1 = 0;
 		double yn_osc_2 = 0;
@@ -563,7 +603,6 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 		do_LFO(&yn_LFO_1, &yn_LFO_2);
 
 		//FM
-
 		if ((start_LFO_1_gui == 1) && (compareEnumToInt(LFO_1_control_guiEnum::FM, LFO_1_control_gui)))
 		{
 			inc_osc_1 = cook_frequency_osc(frequency_osc_1_gui + (20.0 * yn_LFO_1));
@@ -596,14 +635,33 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 			AM_2_out_sample = yn_osc_2;
 		}
 
-		AM_final_out_sample = (volume_osc_1_gui/2) * AM_1_out_sample + (volume_osc_2_gui/2) * AM_2_out_sample;
-		in_btw_sample_1 = AM_final_out_sample;
+		//Osc mix is applied here
+		in_btw_sample_1_osc_1 = (volume_osc_1_gui / 2) * AM_1_out_sample;
+		in_btw_sample_1_osc_2 = (volume_osc_2_gui / 2)* AM_2_out_sample;
 
+
+		//Envelopes
+		if ((note_on_osc_1 == true) && (ringing_osc_1 == false))
+		{
+			EG_state_osc_1 = EG_possible_states::attack;
+			ringing_osc_1 = true;
+		}
+
+		if ((note_on_osc_2 == true) && (ringing_osc_2 == false))
+		{
+			EG_state_osc_2 = EG_possible_states::attack;
+			ringing_osc_2 = true;
+		}
+
+		do_envelope(&EG_state_osc_1, &envelope_output_osc_1);
+		do_envelope(&EG_state_osc_2, &envelope_output_osc_2);
+		envelope_sample = envelope_output_osc_1 * in_btw_sample_1_osc_1 + envelope_output_osc_2 * in_btw_sample_1_osc_2;
+		//final_out_sample = envelope_sample;
 
 		//Gain control filter 
 
 		// Input sample is x(n)
-		xn_gain_control_filter = in_btw_sample_1;
+		xn_gain_control_filter = envelope_sample;
 		//Delay sample is x(n - 1)
 		xn_1_gain_control_filter = z1_gain_control_filter;
 		//Difference equation
@@ -625,6 +683,11 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 		z1_y_COF_control_filter = yn_COF_control_filter;
 
 		final_out_sample = yn_COF_control_filter;
+
+		
+
+		
+		
 
 		//write out
 		processFrameInfo.audioOutputFrame[0] = final_out_sample;
@@ -995,7 +1058,7 @@ bool PluginCore::initPluginPresets()
 	// --- Preset: Factory Preset
 	preset = new PresetInfo(index++, "Factory Preset");
 	initPresetParameters(preset->presetParameters);
-	setPresetParameter(preset->presetParameters, controlID::volume_osc_1_gui, 0.707000);
+	setPresetParameter(preset->presetParameters, controlID::volume_osc_1_gui, 0.500000);
 	setPresetParameter(preset->presetParameters, controlID::frequency_osc_1_gui, 440.000000);
 	setPresetParameter(preset->presetParameters, controlID::start_osc_1_gui, -0.000000);
 	setPresetParameter(preset->presetParameters, controlID::osc_1_type_gui, -0.000000);
@@ -1004,7 +1067,6 @@ bool PluginCore::initPluginPresets()
 	setPresetParameter(preset->presetParameters, controlID::frequency_osc_2_gui, 440.000000);
 	setPresetParameter(preset->presetParameters, controlID::osc_2_type_gui, -0.000000);
 	setPresetParameter(preset->presetParameters, controlID::osc_2_mode_gui, -0.000000);
-	setPresetParameter(preset->presetParameters, controlID::volume_osc_2_gui, 0.707000);
 	setPresetParameter(preset->presetParameters, controlID::start_LFO_1_gui, -0.000000);
 	setPresetParameter(preset->presetParameters, controlID::start_LFO_2_gui, -0.000000);
 	setPresetParameter(preset->presetParameters, controlID::frequency_LFO_1_gui, 10.000000);
@@ -1013,6 +1075,7 @@ bool PluginCore::initPluginPresets()
 	setPresetParameter(preset->presetParameters, controlID::COF_control_filter_gui, 440.000000);
 	setPresetParameter(preset->presetParameters, controlID::LFO_1_control_gui, -0.000000);
 	setPresetParameter(preset->presetParameters, controlID::LFO_2_control_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::volume_osc_2_gui, 0.000000);
 	addPreset(preset);
 
 
@@ -1137,7 +1200,7 @@ void PluginCore::do_oscillate(double *yn_1, double *yn_2)
 	// interpolate the output
 
 	//Oscillator 1
-	if (start_osc_1_gui == 1) {
+	if (osc_1_started == true) {
 		if (compareEnumToInt(osc_1_type_guiEnum::sine, osc_1_type_gui))
 			//sine
 			out_sample_osc_1 = linear_interpolation(0.0, 1.0, sin_array[int_read_index_osc_1], sin_array[int_read_index_next_osc_1], frac_read_index_osc_1);
@@ -1162,7 +1225,7 @@ void PluginCore::do_oscillate(double *yn_1, double *yn_2)
 	}
 
 	//Oscillator 2
-	if (start_osc_2_gui == 1) {
+	if (osc_2_started == 1) {
 		if (compareEnumToInt(osc_2_type_guiEnum::sine, osc_2_type_gui))
 			//sine
 			out_sample_osc_2 = linear_interpolation(0.0, 1.0, sin_array[int_read_index_osc_2], sin_array[int_read_index_next_osc_2], frac_read_index_osc_2);
@@ -1265,4 +1328,166 @@ void PluginCore::do_LFO(double* yn_1, double* yn_2)
 	//write out 
 	*yn_1 = out_sample_LFO_1;
 	*yn_2 = out_sample_LFO_2;
+}
+
+void PluginCore::do_envelope(EG_possible_states *EG_state, double *envelope_output)
+{
+	//EG_possible_states EG_state;
+	EG_possible_states state;
+	state = *EG_state;
+	double output = *envelope_output;
+	
+	
+
+	//this function will be called once per sample period
+	switch (state)
+	{
+		case EG_possible_states::off:
+		{
+			//output is off
+			output = 0.0;
+			break;
+		}
+		
+		case EG_possible_states::attack:
+		{
+			//render value
+			output = attack_offset + attack_coeff * output;
+
+			//check go to the next state
+			if (output >= 1.0 || attack_time_ms <= 0.0) 
+			{
+				output = 1.0;
+				state = EG_possible_states::decay;
+				break;
+			}
+			break;
+		}
+
+		case EG_possible_states::decay:
+		{
+			//render value
+			output = decay_offset + decay_coeff * output;
+
+			//check go to the next state
+			if (output <= sustain_level || decay_time_ms <= 0.0)
+			{
+				output = sustain_level;
+				state = EG_possible_states::sustain;
+				break;
+			}
+			break;
+		}
+
+		case EG_possible_states::sustain:
+		{
+			//render value
+			output = sustain_level;
+			break;
+		}
+
+		case EG_possible_states::release:
+		{
+			//render value
+			output = release_offset + release_coeff * output;
+
+			//check go to the next state
+			if (output <= 0.0 || release_time_ms <= 0.0)
+			{
+				output = 0.0;
+				state = EG_possible_states::off;
+				break;
+			}
+			break;
+		}
+
+
+
+	}
+
+	*EG_state = state;
+	*envelope_output = output;
+
+}
+
+void PluginCore::init_envelope(void)
+{
+	//setting times to default
+	attack_time_ms = EG_default_time;
+	decay_time_ms = EG_default_time;
+	release_time_ms = EG_default_time;
+	sustain_level = 0.8;
+	envelope_output_osc_1 = 0.0;
+	envelope_output_osc_2 = 0.0;
+
+	//states 
+	EG_state_osc_1 = EG_possible_states::off;
+	EG_state_osc_2 = EG_possible_states::off;
+	EG_mode = EG_possible_modes::analog;
+	set_EG_mode();
+
+	//flags 
+	note_on_osc_1 = false;
+	note_on_osc_2 = false;
+	ringing_osc_1 = false;
+	ringing_osc_2 = false;
+
+
+}
+
+void PluginCore::set_EG_mode(void)
+{	
+
+	if (EG_mode == EG_possible_modes::analog)
+	{
+		attack_TCO = exp(-1.5);
+		decay_TCO = exp(-4.95);
+		release_TCO = decay_TCO;
+	}
+	else
+	{
+		//digital is linear-in-dB
+		attack_TCO = 0.99999;
+		decay_TCO = exp(-11.05);
+		release_TCO = decay_TCO;
+	}
+
+	//recalc these 
+	calculate_attack_time();
+	calculate_decay_time();
+	calculate_release_time();
+
+}
+
+void PluginCore::calculate_attack_time(void) 
+{
+	//samples for the exponential rate
+	double samples = getSampleRate() * ((attack_time_ms) / 1000.0);
+
+	//coeff and base for iterative exponential calculation
+	attack_coeff = exp(-log((1.0 + attack_TCO) / attack_TCO) / samples);
+
+	attack_offset = (1.0 + attack_TCO) * (1.0 - attack_coeff);
+}
+
+void PluginCore::calculate_decay_time(void)
+{
+	//samples for the exponential rate
+	double samples = getSampleRate() * ((decay_time_ms) / 1000.0);
+
+	//coeff and base for iterative exponential calculation
+	decay_coeff = exp(-log((1.0 + decay_TCO) / decay_TCO) / samples);
+
+	decay_offset = (sustain_level - decay_TCO) * (1.0 - decay_coeff);
+}
+
+void PluginCore::calculate_release_time(void)
+{
+	//samples for the exponential rate 
+	double samples = getSampleRate() * ((release_time_ms) / 1000.0);
+
+	//coeff and base for iterative exponential calculation
+	release_coeff = exp(-log((1.0 + release_TCO) / release_TCO) / samples);
+
+	release_offset = -release_TCO * (1.0 - release_coeff);
 }

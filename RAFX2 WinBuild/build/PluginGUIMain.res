@@ -30,7 +30,6 @@
 		<control-tag name="controlID::frequency_osc_2_gui" tag="22" />
 		<control-tag name="controlID::osc_2_type_gui" tag="23" />
 		<control-tag name="controlID::osc_2_mode_gui" tag="24" />
-		<control-tag name="controlID::volume_osc_2_gui" tag="21" />
 		<control-tag name="controlID::start_LFO_1_gui" tag="17" />
 		<control-tag name="controlID::start_LFO_2_gui" tag="27" />
 		<control-tag name="controlID::frequency_LFO_1_gui" tag="18" />
@@ -39,6 +38,7 @@
 		<control-tag name="controlID::COF_control_filter_gui" tag="51" />
 		<control-tag name="controlID::LFO_1_control_gui" tag="19" />
 		<control-tag name="controlID::LFO_2_control_gui" tag="29" />
+		<control-tag name="controlID::volume_osc_2_gui" tag="21" />
 		<control-tag name="XY_TRACKPAD" tag="131073" />
 		<control-tag name="VECTOR_JOYSTICK" tag="131074" />
 		<control-tag name="PRESET_NAME" tag="131075" />
