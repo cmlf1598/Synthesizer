@@ -37,7 +37,13 @@ enum controlID {
 	COF_control_filter_gui = 51,
 	LFO_1_control_gui = 19,
 	LFO_2_control_gui = 29,
-	volume_osc_2_gui = 21
+	volume_osc_2_gui = 21,
+	attack_gui = 46,
+	decay_gui = 47,
+	sustain_gui = 48,
+	release_gui = 49,
+	master_meter = 9,
+	master_volume_gui = 8
 };
 
 	// **--0x0F1F--**
@@ -161,7 +167,7 @@ public:
 	EG_possible_states EG_state_osc_2;
 	EG_possible_modes EG_mode;
 	//
-	double EG_default_time = 500;
+	double EG_default_time = 1000;
 	//
 	bool note_on_osc_1;
 	bool note_on_osc_2;
@@ -265,6 +271,11 @@ private:
 	double gain_control_filter_gui = 0.0;
 	double COF_control_filter_gui = 0.0;
 	double volume_osc_2_gui = 0.0;
+	double attack_gui = 0.0;
+	double decay_gui = 0.0;
+	double sustain_gui = 0.0;
+	double release_gui = 0.0;
+	double master_volume_gui = 0.0;
 
 	// --- Discrete Plugin Variables 
 	int start_osc_1_gui = 0;
@@ -296,6 +307,9 @@ private:
 
 	int LFO_2_control_gui = 0;
 	enum class LFO_2_control_guiEnum { AM,FM };	// to compare: if(compareEnumToInt(LFO_2_control_guiEnum::AM, LFO_2_control_gui)) etc... 
+
+	// --- Meter Plugin Variables
+	float master_meter = 0.f;
 
 	// **--0x1A7F--**
     // --- end member variables

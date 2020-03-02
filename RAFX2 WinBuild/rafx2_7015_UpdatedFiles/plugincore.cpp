@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------------
+ // -----------------------------------------------------------------------------
 //    ASPiK Plugin Kernel File:  plugincore.cpp
 //
 /**
@@ -69,103 +69,263 @@ bool PluginCore::initPluginParameters()
 	// --- Declaration of Plugin Parameter Objects 
 	PluginParameter* piParam = nullptr;
 
-	// --- continuous control: FF Filter a1
-	piParam = new PluginParameter(controlID::a1_ff_filter_gui, "FF Filter a1", "", controlVariableType::kDouble, -1.000000, 1.000000, 0.000000, taper::kLinearTaper);
+	// --- continuous control: Vol Osc 1
+	piParam = new PluginParameter(controlID::volume_osc_1_gui, "Vol Osc 1", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.707000, taper::kAntiLogTaper);
 	piParam->setParameterSmoothing(true);
 	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&a1_ff_filter_gui, boundVariableType::kDouble);
+	piParam->setBoundVariable(&volume_osc_1_gui, boundVariableType::kDouble);
 	addPluginParameter(piParam);
 
-	// --- continuous control: Volume
-	piParam = new PluginParameter(controlID::volume_gui, "Volume", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.707000, taper::kAntiLogTaper);
+	// --- continuous control: Freq Osc 1
+	piParam = new PluginParameter(controlID::frequency_osc_1_gui, "Freq Osc 1", "Hz", controlVariableType::kDouble, 25.000000, 4200.000000, 440.000000, taper::kLinearTaper);
 	piParam->setParameterSmoothing(true);
 	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&volume_gui, boundVariableType::kDouble);
+	piParam->setBoundVariable(&frequency_osc_1_gui, boundVariableType::kDouble);
 	addPluginParameter(piParam);
 
-	// --- continuous control: FF Filter a0
-	piParam = new PluginParameter(controlID::a0_ff_filter_gui, "FF Filter a0", "", controlVariableType::kDouble, -1.000000, 1.000000, 1.000000, taper::kLinearTaper);
-	piParam->setParameterSmoothing(true);
-	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&a0_ff_filter_gui, boundVariableType::kDouble);
-	addPluginParameter(piParam);
-
-	// --- continuous control: FB Filter a0
-	piParam = new PluginParameter(controlID::a0_fb_filter_gui, "FB Filter a0", "", controlVariableType::kDouble, -1.000000, 1.000000, 1.000000, taper::kLinearTaper);
-	piParam->setParameterSmoothing(true);
-	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&a0_fb_filter_gui, boundVariableType::kDouble);
-	addPluginParameter(piParam);
-
-	// --- discrete control: Filter selection
-	piParam = new PluginParameter(controlID::filter_selection_gui, "Filter selection", "FF Filter,FB Filter", "FF Filter");
-	piParam->setBoundVariable(&filter_selection_gui, boundVariableType::kInt);
+	// --- discrete control: Start Osc 1
+	piParam = new PluginParameter(controlID::start_osc_1_gui, "Start Osc 1", "SWITCH OFF,SWITCH ON", "SWITCH OFF");
+	piParam->setBoundVariable(&start_osc_1_gui, boundVariableType::kInt);
 	piParam->setIsDiscreteSwitch(true);
 	addPluginParameter(piParam);
 
-	// --- continuous control: Frequency
-	piParam = new PluginParameter(controlID::frequency_osc_gui, "Frequency", "Hz", controlVariableType::kDouble, 200.000000, 6000.000000, 1000.000000, taper::kLinearTaper);
-	piParam->setParameterSmoothing(true);
-	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&frequency_osc_gui, boundVariableType::kDouble);
-	addPluginParameter(piParam);
-
-	// --- discrete control: Start Osc
-	piParam = new PluginParameter(controlID::start_osc_gui, "Start Osc", "SWITCH OFF,SWITCH ON", "SWITCH OFF");
-	piParam->setBoundVariable(&start_osc_gui, boundVariableType::kInt);
+	// --- discrete control: Osc 1 Type
+	piParam = new PluginParameter(controlID::osc_1_type_gui, "Osc 1 Type", "sine,saw,tri,square", "sine");
+	piParam->setBoundVariable(&osc_1_type_gui, boundVariableType::kInt);
 	piParam->setIsDiscreteSwitch(true);
 	addPluginParameter(piParam);
 
-	// --- continuous control: FB Filter b1
-	piParam = new PluginParameter(controlID::b1_fb_filter_gui, "FB Filter b1", "", controlVariableType::kDouble, -1.000000, 1.000000, 0.000000, taper::kLinearTaper);
+	// --- discrete control: Osc 1 Mode
+	piParam = new PluginParameter(controlID::osc_1_mode_gui, "Osc 1 Mode", "normal,bandlimited", "normal");
+	piParam->setBoundVariable(&osc_1_mode_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- discrete control: Start Osc 2
+	piParam = new PluginParameter(controlID::start_osc_2_gui, "Start Osc 2", "SWITCH OFF,SWITCH ON", "SWITCH OFF");
+	piParam->setBoundVariable(&start_osc_2_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Freq Osc 2
+	piParam = new PluginParameter(controlID::frequency_osc_2_gui, "Freq Osc 2", "Hz", controlVariableType::kDouble, 25.000000, 4200.000000, 440.000000, taper::kLinearTaper);
 	piParam->setParameterSmoothing(true);
 	piParam->setSmoothingTimeMsec(20.00);
-	piParam->setBoundVariable(&b1_fb_filter_gui, boundVariableType::kDouble);
+	piParam->setBoundVariable(&frequency_osc_2_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- discrete control: Osc 2 Type
+	piParam = new PluginParameter(controlID::osc_2_type_gui, "Osc 2 Type", "sine,saw,tri,square", "sine");
+	piParam->setBoundVariable(&osc_2_type_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- discrete control: Osc 2 Mode
+	piParam = new PluginParameter(controlID::osc_2_mode_gui, "Osc 2 Mode", "normal,bandlimited", "normal");
+	piParam->setBoundVariable(&osc_2_mode_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- discrete control: Start LFO 1
+	piParam = new PluginParameter(controlID::start_LFO_1_gui, "Start LFO 1", "SWITCH OFF,SWITCH ON", "SWITCH OFF");
+	piParam->setBoundVariable(&start_LFO_1_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- discrete control: Start LFO 2
+	piParam = new PluginParameter(controlID::start_LFO_2_gui, "Start LFO 2", "SWITCH OFF,SWITCH ON", "SWITCH OFF");
+	piParam->setBoundVariable(&start_LFO_2_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Freq LFO 1
+	piParam = new PluginParameter(controlID::frequency_LFO_1_gui, "Freq LFO 1", "Hz", controlVariableType::kDouble, 0.100000, 20.000000, 10.000000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&frequency_LFO_1_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Freq LFO 2
+	piParam = new PluginParameter(controlID::frequency_LFO_2_gui, "Freq LFO 2", "Hz", controlVariableType::kDouble, 0.100000, 20.000000, 10.000000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&frequency_LFO_2_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Gain
+	piParam = new PluginParameter(controlID::gain_control_filter_gui, "Gain", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.500000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&gain_control_filter_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Cut-off freq
+	piParam = new PluginParameter(controlID::COF_control_filter_gui, "Cut-off freq", "Hz", controlVariableType::kDouble, 25.000000, 4200.000000, 440.000000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&COF_control_filter_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- discrete control: LFO 1 control
+	piParam = new PluginParameter(controlID::LFO_1_control_gui, "LFO 1 control", "AM,FM", "AM");
+	piParam->setBoundVariable(&LFO_1_control_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- discrete control: LFO 2 control
+	piParam = new PluginParameter(controlID::LFO_2_control_gui, "LFO 2 control", "AM,FM", "AM");
+	piParam->setBoundVariable(&LFO_2_control_gui, boundVariableType::kInt);
+	piParam->setIsDiscreteSwitch(true);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Vol Osc 2
+	piParam = new PluginParameter(controlID::volume_osc_2_gui, "Vol Osc 2", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.707000, taper::kAntiLogTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&volume_osc_2_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Attack
+	piParam = new PluginParameter(controlID::attack_gui, "Attack", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.500000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&attack_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Decay
+	piParam = new PluginParameter(controlID::decay_gui, "Decay", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.500000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&decay_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Sustain
+	piParam = new PluginParameter(controlID::sustain_gui, "Sustain", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.500000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&sustain_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Release
+	piParam = new PluginParameter(controlID::release_gui, "Release", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.500000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&release_gui, boundVariableType::kDouble);
 	addPluginParameter(piParam);
 
 	// --- Aux Attributes
 	AuxParameterAttribute auxAttribute;
 
 	// --- RAFX GUI attributes
-	// --- controlID::a1_ff_filter_gui
+	// --- controlID::volume_osc_1_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(2147483703);
-	setParamAuxAttribute(controlID::a1_ff_filter_gui, auxAttribute);
+	setParamAuxAttribute(controlID::volume_osc_1_gui, auxAttribute);
 
-	// --- controlID::volume_gui
+	// --- controlID::frequency_osc_1_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(2147483702);
-	setParamAuxAttribute(controlID::volume_gui, auxAttribute);
+	setParamAuxAttribute(controlID::frequency_osc_1_gui, auxAttribute);
 
-	// --- controlID::a0_ff_filter_gui
-	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(2147483703);
-	setParamAuxAttribute(controlID::a0_ff_filter_gui, auxAttribute);
-
-	// --- controlID::a0_fb_filter_gui
-	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(2147483703);
-	setParamAuxAttribute(controlID::a0_fb_filter_gui, auxAttribute);
-
-	// --- controlID::filter_selection_gui
-	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(805306368);
-	setParamAuxAttribute(controlID::filter_selection_gui, auxAttribute);
-
-	// --- controlID::frequency_osc_gui
-	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(2147483680);
-	setParamAuxAttribute(controlID::frequency_osc_gui, auxAttribute);
-
-	// --- controlID::start_osc_gui
+	// --- controlID::start_osc_1_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(1073741824);
-	setParamAuxAttribute(controlID::start_osc_gui, auxAttribute);
+	setParamAuxAttribute(controlID::start_osc_1_gui, auxAttribute);
 
-	// --- controlID::b1_fb_filter_gui
+	// --- controlID::osc_1_type_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(268435456);
+	setParamAuxAttribute(controlID::osc_1_type_gui, auxAttribute);
+
+	// --- controlID::osc_1_mode_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(268435456);
+	setParamAuxAttribute(controlID::osc_1_mode_gui, auxAttribute);
+
+	// --- controlID::start_osc_2_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(1073741824);
+	setParamAuxAttribute(controlID::start_osc_2_gui, auxAttribute);
+
+	// --- controlID::frequency_osc_2_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483702);
+	setParamAuxAttribute(controlID::frequency_osc_2_gui, auxAttribute);
+
+	// --- controlID::osc_2_type_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(268435456);
+	setParamAuxAttribute(controlID::osc_2_type_gui, auxAttribute);
+
+	// --- controlID::osc_2_mode_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(268435456);
+	setParamAuxAttribute(controlID::osc_2_mode_gui, auxAttribute);
+
+	// --- controlID::start_LFO_1_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(1073741824);
+	setParamAuxAttribute(controlID::start_LFO_1_gui, auxAttribute);
+
+	// --- controlID::start_LFO_2_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(1073741824);
+	setParamAuxAttribute(controlID::start_LFO_2_gui, auxAttribute);
+
+	// --- controlID::frequency_LFO_1_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483702);
+	setParamAuxAttribute(controlID::frequency_LFO_1_gui, auxAttribute);
+
+	// --- controlID::frequency_LFO_2_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483702);
+	setParamAuxAttribute(controlID::frequency_LFO_2_gui, auxAttribute);
+
+	// --- controlID::gain_control_filter_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483702);
+	setParamAuxAttribute(controlID::gain_control_filter_gui, auxAttribute);
+
+	// --- controlID::COF_control_filter_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483702);
+	setParamAuxAttribute(controlID::COF_control_filter_gui, auxAttribute);
+
+	// --- controlID::LFO_1_control_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(268435456);
+	setParamAuxAttribute(controlID::LFO_1_control_gui, auxAttribute);
+
+	// --- controlID::LFO_2_control_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(268435456);
+	setParamAuxAttribute(controlID::LFO_2_control_gui, auxAttribute);
+
+	// --- controlID::volume_osc_2_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(2147483703);
-	setParamAuxAttribute(controlID::b1_fb_filter_gui, auxAttribute);
+	setParamAuxAttribute(controlID::volume_osc_2_gui, auxAttribute);
+
+	// --- controlID::attack_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483703);
+	setParamAuxAttribute(controlID::attack_gui, auxAttribute);
+
+	// --- controlID::decay_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483703);
+	setParamAuxAttribute(controlID::decay_gui, auxAttribute);
+
+	// --- controlID::sustain_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483703);
+	setParamAuxAttribute(controlID::sustain_gui, auxAttribute);
+
+	// --- controlID::release_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483703);
+	setParamAuxAttribute(controlID::release_gui, auxAttribute);
 
 
 	// **--0xEDA5--**
@@ -212,37 +372,144 @@ bool PluginCore::initialize(PluginInfo& pluginInfo)
 {
 	// --- add one-time init stuff here
 	
-	//Filters
+	//Gain control filter
+	alfa_gain_control_filter = 1.0;
+	a0_gain_control_filter = gain_control_filter_gui;
+	z1_gain_control_filter = 0.0;
 
-	//Feed-Forward Filter setup
-	a0_left_ff_filter = a0_ff_filter_gui;
-	a0_right_ff_filter = a0_ff_filter_gui;
+	//Cutoff control filter
+	fc_COF_control_filter = COF_control_filter_gui;
+	z1_x_COF_control_filter = 0.0;
+	z1_y_COF_control_filter = 0.0;
 
-	a1_left_ff_filter = a1_ff_filter_gui;
-	a1_right_ff_filter = a1_ff_filter_gui;
+	//Initialize envelope generator
+	init_envelope();
 
-	z1_left_ff_filter = 0.0;
-	z1_right_ff_filter = 0.0;
+	//Wave Table Oscillators
 
-	//Feed-Back Filter initialization
-	a0_left_fb_filter = a0_fb_filter_gui;
-	a0_right_fb_filter = a0_fb_filter_gui;
+	//Triangle wave
+	// slope and y-intercept values.
+	// rising edge 1:
+	double m1_tri_r = 1.0 / 256.0;
+	double b1_tri_r = 0.0;
 
-	b1_left_fb_filter = b1_fb_filter_gui;
-	b1_right_fb_filter = b1_fb_filter_gui;
+	// rising edge 2:
+	double m2_tri_r = 1.0 / 256.0;
+	double b2_tri_r = - 1.0;
 
-	z1_left_fb_filter = 0.0;
-	z1_right_fb_filter = 0.0;
+	// falling edge:
+	double m1_tri_f = -2.0 / 512.0;
+	double b1_tri_f = + 1.0;
 
-	//Oscillator
+	// Sawtooth
+	// rising edge 1:
+	double m1_saw_r = 1.0 / 512.0;
+	double b1_saw_r = 0.0;
 
-	b1_osc = 0;
-	b2_osc = 0;
+	// rising edge 2:
+	double m2_saw_r = 1.0 / 512.0;
+	double b2_saw_r = -1.0;
 
-	y_z1_osc = 0;
-	y_z2_osc = 0;
+	//setup arrays 
+	// maxes used for normalization
+	double max_tri = 0;
+	double max_saw = 0;
+	double max_sqr = 0;
 
-	cook_frequency();
+
+	for (int i = 0; i < 1024; i++)
+	{
+		// sample the sinusoid. 1024 points
+		// sin(wnT) = sin(2pi*i/1024)
+		sin_array[i] = sin(((double) (i/ 1024.0) )* (kTwoPi));
+
+		// Sawtooth
+		saw_tooth_array[i] = i < 512 ? m1_saw_r * i + b1_saw_r : m2_saw_r * ((__int64)i - 511) + b2_saw_r;
+
+		// Triangle 
+		if (i < 256)
+			triangle_array[i] = m1_tri_r * i + b1_tri_r;
+		else if (i >= 256 && i < 768)
+			triangle_array[i] = m1_tri_f * ((__int64)i - 256) + b1_tri_f;
+		else
+			triangle_array[i] = m2_tri_r * ((__int64)i - 768) + b2_tri_r;
+
+		// Square
+		if (i == 1)
+			square_array[i] = 0.0;
+		else 
+			square_array[i] = i < 512 ? +1.0 : -1.0;
+
+		//zero at the start of each
+		saw_tooth_array_bl5[i] = 0.0;
+		triangle_array_bl5[i] = 0.0;
+		square_array_bl5[i] = 0.0;
+
+		// sawtooth harmonics
+		for (int g = 1; g <= 6; g++) 
+		{
+			double n = (double) g;
+			saw_tooth_array_bl5[i] += pow(-1.0, g + 1) * (1.0 / n) * sin(kTwoPi * i * n / 1024.0);
+		}
+
+		// triangle harmonics
+		for (int g = 0; g <= 3; g++)
+		{
+			double n = (double) g;
+			triangle_array_bl5[i] += pow(-1.0, g) * (1.0 / pow((2 * n + 1), 2)) * sin(kTwoPi * (2.0 * n + 1) * i / 1024.0);
+		}
+
+		// square harmonics
+		for (int g = 1; g <= 5; g += 2)
+		{
+			double n = double(g);
+			square_array_bl5[i] += (1.0 / n) * sin(kTwoPi * i * n / 1024.0);
+		}
+
+		if (i == 0)
+		{
+			max_saw = saw_tooth_array_bl5[i];
+			max_tri = triangle_array_bl5[i];
+			max_sqr = square_array_bl5[i];
+		}
+		else
+		{
+			//test and store
+			if (saw_tooth_array_bl5[i] > max_saw)
+				max_saw = saw_tooth_array_bl5[i];
+
+			if (triangle_array_bl5[i] > max_tri)
+				max_tri = triangle_array_bl5[i];
+
+			if (square_array_bl5[i] > max_sqr)
+				max_sqr = square_array_bl5[i];
+		}
+	}
+
+	//normalize the bandlimited tables
+	for (int i = 0; i < 1024; i++)
+	{
+		//normalize it
+		saw_tooth_array_bl5[i] /= max_saw;
+		triangle_array_bl5[i] /= max_tri;
+		square_array_bl5[i] /= max_sqr;
+	}
+
+
+	// clear variables 
+	reset();
+	osc_1_started = false;
+	osc_2_started = false;
+	inc_osc_1 = 0.0;
+	inc_osc_2 = 0.0;
+	inc_LFO_1 = 0.0;
+	inc_LFO_2 = 0.0;
+
+	// initialize inc
+	inc_osc_1 = cook_frequency_osc(frequency_osc_1_gui);
+	inc_osc_2 = cook_frequency_osc(frequency_osc_2_gui);
+	inc_LFO_1 = cook_frequency_osc(frequency_LFO_1_gui);
+	inc_LFO_2 = cook_frequency_osc(frequency_LFO_2_gui);
 
 	return true;
 }
@@ -267,6 +534,10 @@ bool PluginCore::preProcessAudioBuffers(ProcessBufferInfo& processInfo)
     //     want to use the auto-variable-binding
     syncInBoundVariables();
 
+	//reset the index
+	//reset();
+
+	//cook current frequency
 	//cook_frequency();
 
     return true;
@@ -294,30 +565,29 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 
 	//variables can go here.
 
-	//Oscillator
-	double yn_osc;
+	double AM_final_out_sample;
+	double AM_1_out_sample;
+	double AM_2_out_sample;
+	double gain_control_sample;
+	double envelope_sample;
+	double final_out_sample;
 
-	//Feed-Forward Filter 
-	double xn_left_ff_filter;
-	double xn_1_left_ff_filter;
-	double yn_left_ff_filter;
+	double in_btw_sample_1_osc_1;
+	double in_btw_sample_1_osc_2;
 
-	double xn_right_ff_filter;
-	double xn_1_right_ff_filter;
-	double yn_right_ff_filter;
+	//Gain control Filter 
+	double xn_gain_control_filter;
+	double xn_1_gain_control_filter;
+	double yn_gain_control_filter;
 
-	//Feed-Back Filter 
-	double xn_left_fb_filter;
-	double yn_left_fb_filter;
-	double yn_1_left_fb_filter;
-
-	double xn_right_fb_filter;
-	double yn_right_fb_filter;
-	double yn_1_right_fb_filter;
+	//Cut-off frequency control filter
+	double xn_COF_control_filter;
+	double xn_1_COF_control_filter;
+	double yn_COF_control_filter;
+	double yn_1_COF_control_filter;
 
 	//Volume
-	double master_volume_left = volume_gui;
-	double master_volume_right = volume_gui;
+	
 
     // --- decode the channelIOConfiguration and process accordingly
     //
@@ -326,26 +596,154 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 
 	if (getPluginType() == kSynthPlugin)
 	{
-		// --- output silence: change this with your signal render code
-		if (start_osc_gui == 0) 
+		
+		//Note on/off conditions for osc 1
+		if (start_osc_1_gui == 0)
 		{
-			processFrameInfo.audioOutputFrame[0] = 0.0;
-			if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
-				processFrameInfo.audioOutputFrame[1] = 0.0;
+			if (EG_state_osc_1 == EG_possible_states::off)
+			{
+				osc_1_started = false;
+				ringing_osc_1 = false;
+			}
 
-			return true;	/// processed
+			if (ringing_osc_1 == true)
+			{
+				note_on_osc_1 = false;
+				EG_state_osc_1 = EG_possible_states::release;
+			}
+		} 
+		else
+		{
+			osc_1_started = true;
+			note_on_osc_1 = true;
+		}
+		
+		//Note on/off conditions for osc 2
+		if (start_osc_2_gui == 0)
+		{
+			if (EG_state_osc_2 == EG_possible_states::off)
+			{
+				osc_2_started = false;
+				ringing_osc_2 = false;
+			}
+
+			if (ringing_osc_2 == true)
+			{
+				note_on_osc_2 = false;
+				EG_state_osc_2 = EG_possible_states::release;
+			}
+		} 
+		else
+		{
+			osc_2_started = true;
+			note_on_osc_2 = true;
 		}
 
-		//Oscillator
-		yn_osc = -b1_osc * y_z1_osc - b2_osc * y_z2_osc;
+		
+		//intermediate variables
+		double yn_osc_1 = 0;
+		double yn_osc_2 = 0;
+		double yn_LFO_1 = 0;
+		double yn_LFO_2 = 0;
 
-		processFrameInfo.audioOutputFrame[0] = master_volume_left*yn_osc;
+		
+		//call the LFO function
+		do_LFO(&yn_LFO_1, &yn_LFO_2);
+
+		//FM
+		if ((start_LFO_1_gui == 1) && (compareEnumToInt(LFO_1_control_guiEnum::FM, LFO_1_control_gui)))
+		{
+			inc_osc_1 = cook_frequency_osc(frequency_osc_1_gui + (20.0 * yn_LFO_1));
+		}
+
+		if ((start_LFO_2_gui == 1) && (compareEnumToInt(LFO_2_control_guiEnum::FM, LFO_2_control_gui)))
+		{
+			inc_osc_2 = cook_frequency_osc(frequency_osc_2_gui + (20.0 * yn_LFO_2));
+		}
+
+		//call the oscillator function
+		do_oscillate(&yn_osc_1, &yn_osc_2);
+		
+		//AM
+		if ((start_LFO_1_gui == 1) && (compareEnumToInt(LFO_1_control_guiEnum::AM, LFO_1_control_gui)))
+		{
+			AM_1_out_sample = yn_LFO_1  * yn_osc_1;
+		}
+		else
+		{
+			AM_1_out_sample = yn_osc_1;
+		}
+
+		if ((start_LFO_2_gui == 1) && (compareEnumToInt(LFO_2_control_guiEnum::AM, LFO_2_control_gui)))
+		{
+			AM_2_out_sample = yn_LFO_2  * yn_osc_2;
+		}
+		else
+		{
+			AM_2_out_sample = yn_osc_2;
+		}
+
+		//Osc mix is applied here
+		in_btw_sample_1_osc_1 = (volume_osc_1_gui / 2) * AM_1_out_sample;
+		in_btw_sample_1_osc_2 = (volume_osc_2_gui / 2)* AM_2_out_sample;
+
+
+		//Envelopes
+		if ((note_on_osc_1 == true) && (ringing_osc_1 == false))
+		{
+			EG_state_osc_1 = EG_possible_states::attack;
+			ringing_osc_1 = true;
+		}
+
+		if ((note_on_osc_2 == true) && (ringing_osc_2 == false))
+		{
+			EG_state_osc_2 = EG_possible_states::attack;
+			ringing_osc_2 = true;
+		}
+
+		do_envelope(&EG_state_osc_1, &envelope_output_osc_1);
+		do_envelope(&EG_state_osc_2, &envelope_output_osc_2);
+		envelope_sample = envelope_output_osc_1 * in_btw_sample_1_osc_1 + envelope_output_osc_2 * in_btw_sample_1_osc_2;
+		//final_out_sample = envelope_sample;
+
+		//Gain control filter 
+
+		// Input sample is x(n)
+		xn_gain_control_filter = envelope_sample;
+		//Delay sample is x(n - 1)
+		xn_1_gain_control_filter = z1_gain_control_filter;
+		//Difference equation
+		yn_gain_control_filter = (a0_gain_control_filter * xn_gain_control_filter) + (alfa_gain_control_filter * xn_1_gain_control_filter);
+		//Delay with current x(n)
+		z1_gain_control_filter = xn_gain_control_filter;
+		
+		gain_control_sample = yn_gain_control_filter;
+
+		//COF control filter
+		
+		//For the Lowpass Filter
+		xn_COF_control_filter = gain_control_sample;
+		xn_1_COF_control_filter = z1_x_COF_control_filter;
+		yn_1_COF_control_filter = z1_y_COF_control_filter;
+		yn_COF_control_filter = b0_COF_control_filter * xn_COF_control_filter + b1_COF_control_filter * xn_1_COF_control_filter
+			- a1_COF_control_filter * yn_1_COF_control_filter;
+		z1_x_COF_control_filter = xn_COF_control_filter;
+		z1_y_COF_control_filter = yn_COF_control_filter;
+
+		final_out_sample = yn_COF_control_filter;
+
+		
+
+		
+		
+
+		//write out
+		processFrameInfo.audioOutputFrame[0] = final_out_sample;
 		if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
-			processFrameInfo.audioOutputFrame[1] = master_volume_right*yn_osc;
+			processFrameInfo.audioOutputFrame[1] = final_out_sample;
 
-		//update oscillator memory blocks
-		y_z2_osc = y_z1_osc;
-		y_z1_osc = yn_osc;
+		return true;	/// processed
+
 	}
 
 
@@ -357,100 +755,15 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
        processFrameInfo.channelIOConfig.outputChannelFormat == kCFMono)
     {
 		// --- pass through code: change this with your signal processing
-
-		//Feed-Forward Filter 
-
-		if (compareEnumToInt(filter_selection_guiEnum::FF_Filter, filter_selection_gui)) 
-		{
-			// Input sample is x(n)
-			xn_left_ff_filter = processFrameInfo.audioInputFrame[0];
-
-			//Delay sample is x(n - 1)
-			xn_1_left_ff_filter = z1_left_ff_filter;
-
-			//Difference Equation
-			yn_left_ff_filter = a0_left_ff_filter * xn_left_ff_filter + a1_left_ff_filter * xn_1_left_ff_filter;
-
-			//Delay with current x(n)
-			z1_left_ff_filter = xn_left_ff_filter;
-
-			//Output sample is y(n)
-			processFrameInfo.audioOutputFrame[0] = yn_left_ff_filter * master_volume_left;
-		}
-
-		//Feed-back Filter 
-
-		if (compareEnumToInt(filter_selection_guiEnum::FB_Filter, filter_selection_gui))
-		{
-			// Input sample is x(n)
-			xn_left_fb_filter = processFrameInfo.audioInputFrame[0];
-
-			//Delay sample is y(n - 1)
-			yn_1_left_fb_filter = z1_left_fb_filter;
-
-			//Difference Equation
-			yn_left_fb_filter = a0_left_fb_filter * xn_left_fb_filter - b1_left_fb_filter * yn_1_left_fb_filter;
-
-			//Delay with current y(n)
-			z1_left_fb_filter = yn_left_fb_filter;
-
-			//Output sample is y(n)
-			processFrameInfo.audioOutputFrame[0] = yn_left_fb_filter * master_volume_left;
-		}
-
-        return true; /// processed
+		return true; /// processed
+		
     }
 
     // --- Mono-In/Stereo-Out
     else if(processFrameInfo.channelIOConfig.inputChannelFormat == kCFMono &&
        processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
     {
-		// --- pass through code: change this with your signal processing
-
-		//Feed-Forward Filter 
-
-		if (compareEnumToInt(filter_selection_guiEnum::FF_Filter, filter_selection_gui))
-		{
-			// Input sample is x(n)
-			xn_left_ff_filter = processFrameInfo.audioInputFrame[0];
-
-			//Delay sample is x(n - 1)
-			xn_1_left_ff_filter = z1_left_ff_filter;
-
-			//Difference Equation
-			yn_left_ff_filter = a0_left_ff_filter * xn_left_ff_filter + a1_left_ff_filter * xn_1_left_ff_filter;
-
-			//Delay with current x(n)
-			z1_left_ff_filter = xn_left_ff_filter;
-
-			//Output sample is y(n)
-			yn_right_ff_filter = yn_left_ff_filter;
-			processFrameInfo.audioOutputFrame[0] = yn_left_ff_filter * master_volume_left;
-			processFrameInfo.audioOutputFrame[1] = yn_right_ff_filter * master_volume_right;
-		}
-
-		//Feed-back Filter 
-
-		if (compareEnumToInt(filter_selection_guiEnum::FB_Filter, filter_selection_gui))
-		{
-			// Input sample is x(n)
-			xn_left_fb_filter = processFrameInfo.audioInputFrame[0];
-
-			//Delay sample is y(n - 1)
-			yn_1_left_fb_filter = z1_left_fb_filter;
-
-			//Difference Equation
-			yn_left_fb_filter = a0_left_fb_filter * xn_left_fb_filter - b1_left_fb_filter * yn_1_left_fb_filter;
-
-			//Delay with current y(n)
-			z1_left_fb_filter = yn_left_fb_filter;
-
-			//Output sample is y(n)
-			yn_right_fb_filter = yn_left_fb_filter;
-			processFrameInfo.audioOutputFrame[0] = yn_left_fb_filter * master_volume_left;
-			processFrameInfo.audioOutputFrame[1] = yn_right_fb_filter * master_volume_right;
-		}
-
+		
 		return true; /// processed
     }
 
@@ -459,55 +772,7 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
        processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
     {
 		// --- pass through code: change this with your signal processing
-
-		//Feed-Forward Filter 
-
-		if (compareEnumToInt(filter_selection_guiEnum::FF_Filter, filter_selection_gui))
-		{
-			// Input sample is x(n)
-			xn_left_ff_filter = processFrameInfo.audioInputFrame[0];
-			xn_right_ff_filter = processFrameInfo.audioInputFrame[1];
-
-			//Delay sample is x(n - 1)
-			xn_1_left_ff_filter = z1_left_ff_filter;
-			xn_1_right_ff_filter = z1_right_ff_filter;
-
-			//Difference Equation
-			yn_left_ff_filter = a0_left_ff_filter * xn_left_ff_filter + a1_left_ff_filter * xn_1_left_ff_filter;
-			yn_right_ff_filter = a0_right_ff_filter * xn_right_ff_filter + a1_right_ff_filter * xn_1_right_ff_filter;
-
-			//Delay with current x(n)
-			z1_left_ff_filter = xn_left_ff_filter;
-			z1_right_ff_filter = xn_right_ff_filter;
-
-			//Output sample is y(n)
-			processFrameInfo.audioOutputFrame[0] = yn_left_ff_filter * master_volume_left;
-			processFrameInfo.audioOutputFrame[1] = yn_right_ff_filter * master_volume_right;
-		}
-
-		if (compareEnumToInt(filter_selection_guiEnum::FB_Filter, filter_selection_gui))
-		{
-			// Input sample is x(n)
-			xn_left_fb_filter = processFrameInfo.audioInputFrame[0];
-			xn_right_fb_filter = processFrameInfo.audioInputFrame[1];
-
-			//Delay sample is y(n - 1)
-			yn_1_left_fb_filter = z1_left_fb_filter;
-			yn_1_right_fb_filter = z1_right_fb_filter;
-
-			//Difference Equation
-			yn_left_fb_filter = a0_left_fb_filter * xn_left_fb_filter - b1_left_fb_filter * yn_1_left_fb_filter;
-			yn_right_fb_filter = a0_right_fb_filter * xn_right_fb_filter - b1_right_fb_filter * yn_1_right_fb_filter;
-
-			//Delay with current y(n)
-			z1_left_fb_filter = yn_left_fb_filter;
-			z1_right_fb_filter = yn_right_fb_filter;
-
-			//Output sample is y(n)
-			processFrameInfo.audioOutputFrame[0] = yn_left_fb_filter * master_volume_left;
-			processFrameInfo.audioOutputFrame[1] = yn_right_fb_filter * master_volume_right;
-		}
-
+		
         return true; /// processed
     }
 
@@ -602,45 +867,116 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
     //     for the Parameter involved
     switch(controlID)
     {
-        case 0:
-        {	
-			// direct map to the a1 ff filter knob
-			a1_left_ff_filter = a1_ff_filter_gui;
-			a1_right_ff_filter = a1_ff_filter_gui;
-			break;
-        }
-
-		case 2:
-		{
-			//freq
-			cook_frequency();
-			break;
-		}
-
+        
 		case 10:
 		{
-			// direct map to the a0 ff filter knob
-			a0_left_ff_filter = a0_ff_filter_gui;
-			a0_right_ff_filter = a0_ff_filter_gui;
+			//if oscillator 1 is started
+			if (start_osc_1_gui == 1) 
+				//reset(); //this caused a reset every ~66th sample period. 
+				inc_osc_1 = cook_frequency_osc(frequency_osc_1_gui);
 			break;
 		}
+
+
+		case 12:
+		{	
+			//freq
+			inc_osc_1 = cook_frequency_osc(frequency_osc_1_gui);
+			break;
+		}
+
+
+		case 17:
+		{
+			//if LFO 1 is started
+			if (start_LFO_1_gui == 1) {
+				inc_LFO_1 = cook_frequency_osc(frequency_LFO_1_gui);
+			}
+
+			break;
+		}
+
+		case 18:
+		{
+			//freq
+			inc_LFO_1 = cook_frequency_osc(frequency_LFO_1_gui);
+			break;
+		}
+
 
 		case 20:
 		{
-			// direct map to the a0 fb filter knob
-			a0_left_fb_filter = a0_fb_filter_gui;
-			a0_right_fb_filter = a0_fb_filter_gui;
+			//if oscillator 2 is started
+			if (start_osc_2_gui == 1) 
+				//reset(); //this caused a reset every ~66th sample period. 
+				inc_osc_2 = cook_frequency_osc(frequency_osc_2_gui);
 			break;
 		}
 
-		case 30:
+		case 22:
 		{
-			// direct map to the b1 fb filter knob
-			b1_left_fb_filter = b1_fb_filter_gui;
-			b1_right_fb_filter = b1_fb_filter_gui;
+			//freq
+			inc_osc_2 = cook_frequency_osc(frequency_osc_2_gui);
 			break;
 		}
 
+		case 27:
+		{
+			//if LFO 2 is started
+			if (start_LFO_2_gui == 1) 
+				inc_LFO_2 = cook_frequency_osc(frequency_LFO_2_gui);
+			break;
+		}
+
+		case 28:
+		{
+			//freq
+			inc_LFO_2 = cook_frequency_osc(frequency_LFO_2_gui);
+			break;
+		}
+
+		case 41:
+		{
+			//freq
+			a0_gain_control_filter = gain_control_filter_gui;
+			break;
+		}
+		
+		
+		case 46:
+		{
+			attack_time_ms = attack_gui * EG_default_time;
+			calculate_attack_time();
+			break;
+		}
+
+		case 47:
+		{
+			decay_time_ms = decay_gui * EG_default_time;
+			calculate_decay_time();
+			break;
+		}
+
+		case 48:
+		{
+			sustain_level = sustain_gui;
+			break;
+		}
+
+		case 49:
+		{
+			release_time_ms = release_gui * EG_default_time;
+			calculate_release_time();
+			break;
+		}
+		case 51:
+		{	
+			fc_COF_control_filter = COF_control_filter_gui;
+			K_COF_control_filter = tan((kTwoPi * fc_COF_control_filter) / getSampleRate());
+			b0_COF_control_filter = K_COF_control_filter / (K_COF_control_filter + 1);
+			b1_COF_control_filter = b0_COF_control_filter;
+			a1_COF_control_filter = (K_COF_control_filter - 1) / (K_COF_control_filter + 1);
+		}
         default:
 			break;
     }
@@ -797,14 +1133,28 @@ bool PluginCore::initPluginPresets()
 	// --- Preset: Factory Preset
 	preset = new PresetInfo(index++, "Factory Preset");
 	initPresetParameters(preset->presetParameters);
-	setPresetParameter(preset->presetParameters, controlID::a1_ff_filter_gui, 0.000000);
-	setPresetParameter(preset->presetParameters, controlID::volume_gui, 0.707000);
-	setPresetParameter(preset->presetParameters, controlID::a0_ff_filter_gui, 1.000000);
-	setPresetParameter(preset->presetParameters, controlID::a0_fb_filter_gui, 1.000000);
-	setPresetParameter(preset->presetParameters, controlID::filter_selection_gui, -0.000000);
-	setPresetParameter(preset->presetParameters, controlID::frequency_osc_gui, 1000.000000);
-	setPresetParameter(preset->presetParameters, controlID::start_osc_gui, -0.000000);
-	setPresetParameter(preset->presetParameters, controlID::b1_fb_filter_gui, 0.000000);
+	setPresetParameter(preset->presetParameters, controlID::volume_osc_1_gui, 0.707000);
+	setPresetParameter(preset->presetParameters, controlID::frequency_osc_1_gui, 440.000000);
+	setPresetParameter(preset->presetParameters, controlID::start_osc_1_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::osc_1_type_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::osc_1_mode_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::start_osc_2_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::frequency_osc_2_gui, 440.000000);
+	setPresetParameter(preset->presetParameters, controlID::osc_2_type_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::osc_2_mode_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::start_LFO_1_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::start_LFO_2_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::frequency_LFO_1_gui, 10.000000);
+	setPresetParameter(preset->presetParameters, controlID::frequency_LFO_2_gui, 10.000000);
+	setPresetParameter(preset->presetParameters, controlID::gain_control_filter_gui, 0.500000);
+	setPresetParameter(preset->presetParameters, controlID::COF_control_filter_gui, 440.000000);
+	setPresetParameter(preset->presetParameters, controlID::LFO_1_control_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::LFO_2_control_gui, -0.000000);
+	setPresetParameter(preset->presetParameters, controlID::volume_osc_2_gui, 0.707000);
+	setPresetParameter(preset->presetParameters, controlID::attack_gui, 0.500000);
+	setPresetParameter(preset->presetParameters, controlID::decay_gui, 0.500000);
+	setPresetParameter(preset->presetParameters, controlID::sustain_gui, 0.500000);
+	setPresetParameter(preset->presetParameters, controlID::release_gui, 0.500000);
 	addPreset(preset);
 
 
@@ -844,6 +1194,7 @@ bool PluginCore::initPluginDescriptors()
 	apiSpecificInfo.auBundleName = kAUBundleName;
 	apiSpecificInfo.auBundleName = kAUBundleName;
 	apiSpecificInfo.auBundleName = kAUBundleName;
+	apiSpecificInfo.auBundleName = kAUBundleName;
 	apiSpecificInfo.auBundleName = kAUBundleName;   /* MacOS only: this MUST match the bundle identifier in your info.plist file */
     apiSpecificInfo.auBundleName = kAUBundleName;
 
@@ -874,37 +1225,348 @@ int32_t PluginCore::getFourCharCode(){ return kFourCharCode; }
 
 // --- user defined functions --------------------------------------------- //
 
-void PluginCore::cook_frequency() 
+double PluginCore::cook_frequency_osc(double frequency_osc) 
 {
-	//Oscillation Rate = theta = wT = w/fs 
-	double wT = (kTwoPi*frequency_osc_gui)/getSampleRate();
-
-	//coefficients according to design equations
-	b1_osc = -2.0 * cos(wT);
-	b2_osc = 1.0;
-
-	//set initial conditions
-	//y_z1_osc = sin(-1.0 * wT);	// sin(w(-1)T)
-	//y_z2_osc = sin(-2.0 * wT);	// sin(w(-2)T)
-
-	//re calculate new initial conditions
-	double wnT1 = asin(y_z1_osc);
-	//find n
-	double n = wnT1 / wT;
-
-	//asin will only return values from -pi/2 to pi/2 
-	//(a sine wave in this range only includes a rising edge)
-	//If we are on a rising edge, use the value 1T behind. 
-	//On the other hand, on a falling edge the value 1T ahead is
-	//equivalent to the 1T behind.
-	if (y_z1_osc > y_z2_osc)
-		n -= 1;
-	else
-		n += 1;
-
-	//calculate the new sample
-	y_z2_osc = sin((n)*wT);
+	//inc = L*fd/fs
+	double inc_osc = 0.0;
+	inc_osc = 1024.0 * frequency_osc / getSampleRate();
+	return inc_osc;
 }
 
 
+double PluginCore::linear_interpolation(double x1, double x2, double y1, double y2, double frac)
+{
+	double m = (y2 - y1) / (x2 - x1);
 
+	double y = y2 - ( m * (x2 - frac));
+
+	return y;
+}
+
+void PluginCore::do_oscillate(double *yn_1, double *yn_2)
+{
+	*yn_1 = 0.0;
+	*yn_2 = 0.0;
+
+	//Oscillator 1
+	double out_sample_osc_1;
+	int int_read_index_osc_1;
+	double frac_read_index_osc_1;
+	int int_read_index_next_osc_1;
+
+	//Oscillator 2
+	double out_sample_osc_2;
+	int int_read_index_osc_2;
+	double frac_read_index_osc_2;
+	int int_read_index_next_osc_2;
+
+	// output value for this cycle
+	out_sample_osc_1 = 0;
+	out_sample_osc_2 = 0;
+
+	// get integer part
+	int_read_index_osc_1 = (int)read_index_osc_1;
+	int_read_index_osc_2 = (int)read_index_osc_2;
+
+	//get fractional part
+	frac_read_index_osc_1 = read_index_osc_1 - (double)int_read_index_osc_1;
+	frac_read_index_osc_2 = read_index_osc_2 - (double)int_read_index_osc_2;
+
+	//second index for interpolation: wrap around buffer if needed
+	int_read_index_next_osc_1 = int_read_index_osc_1 + 1 > 1023 ? 0 : int_read_index_osc_1 + 1;
+	int_read_index_next_osc_2 = int_read_index_osc_2 + 1 > 1023 ? 0 : int_read_index_osc_2 + 1;
+
+	// interpolate the output
+
+	//Oscillator 1
+	if (osc_1_started == true) {
+		if (compareEnumToInt(osc_1_type_guiEnum::sine, osc_1_type_gui))
+			//sine
+			out_sample_osc_1 = linear_interpolation(0.0, 1.0, sin_array[int_read_index_osc_1], sin_array[int_read_index_next_osc_1], frac_read_index_osc_1);
+		else if (compareEnumToInt(osc_1_type_guiEnum::saw, osc_1_type_gui))
+			//saw
+			if (compareEnumToInt(osc_1_mode_guiEnum::normal, osc_1_mode_gui))
+				out_sample_osc_1 = linear_interpolation(0.0, 1.0, saw_tooth_array[int_read_index_osc_1], saw_tooth_array[int_read_index_next_osc_1], frac_read_index_osc_1);
+			else
+				out_sample_osc_1 = linear_interpolation(0.0, 1.0, saw_tooth_array_bl5[int_read_index_osc_1], saw_tooth_array_bl5[int_read_index_next_osc_1], frac_read_index_osc_1);
+		else if (compareEnumToInt(osc_1_type_guiEnum::tri, osc_1_type_gui))
+			//triangular
+			if (compareEnumToInt(osc_1_mode_guiEnum::normal, osc_1_mode_gui))
+				out_sample_osc_1 = linear_interpolation(0.0, 1.0, triangle_array[int_read_index_osc_1], triangle_array[int_read_index_next_osc_1], frac_read_index_osc_1);
+			else
+				out_sample_osc_1 = linear_interpolation(0.0, 1.0, triangle_array_bl5[int_read_index_osc_1], triangle_array_bl5[int_read_index_next_osc_1], frac_read_index_osc_1);
+		else if (compareEnumToInt(osc_1_type_guiEnum::square, osc_1_type_gui))
+			//square
+			if (compareEnumToInt(osc_1_mode_guiEnum::normal, osc_1_mode_gui))
+				out_sample_osc_1 = linear_interpolation(0.0, 1.0, square_array[int_read_index_osc_1], square_array[int_read_index_next_osc_1], frac_read_index_osc_1);
+			else
+				out_sample_osc_1 = linear_interpolation(0.0, 1.0, square_array_bl5[int_read_index_osc_1], square_array_bl5[int_read_index_next_osc_1], frac_read_index_osc_1);
+	}
+
+	//Oscillator 2
+	if (osc_2_started == 1) {
+		if (compareEnumToInt(osc_2_type_guiEnum::sine, osc_2_type_gui))
+			//sine
+			out_sample_osc_2 = linear_interpolation(0.0, 1.0, sin_array[int_read_index_osc_2], sin_array[int_read_index_next_osc_2], frac_read_index_osc_2);
+		else if (compareEnumToInt(osc_2_type_guiEnum::saw, osc_2_type_gui))
+			//saw
+			if (compareEnumToInt(osc_2_mode_guiEnum::normal, osc_2_mode_gui))
+				out_sample_osc_2 = linear_interpolation(0.0, 1.0, saw_tooth_array[int_read_index_osc_2], saw_tooth_array[int_read_index_next_osc_2], frac_read_index_osc_2);
+			else
+				out_sample_osc_2 = linear_interpolation(0.0, 1.0, saw_tooth_array_bl5[int_read_index_osc_2], saw_tooth_array_bl5[int_read_index_next_osc_2], frac_read_index_osc_2);
+		else if (compareEnumToInt(osc_2_type_guiEnum::tri, osc_2_type_gui))
+			//triangular
+			if (compareEnumToInt(osc_2_mode_guiEnum::normal, osc_2_mode_gui))
+				out_sample_osc_2 = linear_interpolation(0.0, 1.0, triangle_array[int_read_index_osc_2], triangle_array[int_read_index_next_osc_2], frac_read_index_osc_2);
+			else
+				out_sample_osc_2 = linear_interpolation(0.0, 1.0, triangle_array_bl5[int_read_index_osc_2], triangle_array_bl5[int_read_index_next_osc_2], frac_read_index_osc_2);
+		else if (compareEnumToInt(osc_2_type_guiEnum::square, osc_2_type_gui))
+			//square
+			if (compareEnumToInt(osc_2_mode_guiEnum::normal, osc_2_mode_gui))
+				out_sample_osc_2 = linear_interpolation(0.0, 1.0, square_array[int_read_index_osc_2], square_array[int_read_index_next_osc_2], frac_read_index_osc_2);
+			else
+				out_sample_osc_2 = linear_interpolation(0.0, 1.0, square_array_bl5[int_read_index_osc_2], square_array_bl5[int_read_index_next_osc_2], frac_read_index_osc_2);
+	}
+
+	// add increment 
+	read_index_osc_1 += inc_osc_1;
+	read_index_osc_2 += inc_osc_2;
+
+	//check the wrap
+	if (read_index_osc_1 > 1024.0)
+		read_index_osc_1 = read_index_osc_1 - 1024.0;
+	if (read_index_osc_2 > 1024.0)
+		read_index_osc_2 = read_index_osc_2 - 1024.0;
+
+	//write out 
+	*yn_1 = out_sample_osc_1;
+	*yn_2 = out_sample_osc_2;
+}
+
+void PluginCore::do_LFO(double* yn_1, double* yn_2)
+{
+	*yn_1 = 0.0;
+	*yn_2 = 0.0;
+
+	//Oscillator 1
+	double out_sample_LFO_1;
+	int int_read_index_LFO_1;
+	double frac_read_index_LFO_1;
+	int int_read_index_next_LFO_1;
+
+	//Oscillator 2
+	double out_sample_LFO_2;
+	int int_read_index_LFO_2;
+	double frac_read_index_LFO_2;
+	int int_read_index_next_LFO_2;
+
+	// output value for this cycle
+	out_sample_LFO_1 = 0;
+	out_sample_LFO_2 = 0;
+
+	// get integer part
+	int_read_index_LFO_1 = (int)read_index_LFO_1;
+	int_read_index_LFO_2 = (int)read_index_LFO_2;
+
+	//get fractional part
+	frac_read_index_LFO_1 = read_index_LFO_1 - (double)int_read_index_LFO_1;
+	frac_read_index_LFO_2 = read_index_LFO_2 - (double)int_read_index_LFO_2;
+
+	//second index for interpolation: wrap around buffer if needed
+	int_read_index_next_LFO_1 = int_read_index_LFO_1 + 1 > 1023 ? 0 : int_read_index_LFO_1 + 1;
+	int_read_index_next_LFO_2 = int_read_index_LFO_2 + 1 > 1023 ? 0 : int_read_index_LFO_2 + 1;
+
+	// interpolate the output
+
+	//LFO 1
+	if (start_LFO_1_gui == 1) {
+
+		//sine
+		out_sample_LFO_1 = linear_interpolation(0.0, 1.0, sin_array[int_read_index_LFO_1], sin_array[int_read_index_next_LFO_1], frac_read_index_LFO_1);
+		
+	}
+
+	//Oscillator 2
+	if (start_osc_2_gui == 1) {
+
+		//sine
+		out_sample_LFO_2 = linear_interpolation(0.0, 1.0, sin_array[int_read_index_LFO_2], sin_array[int_read_index_next_LFO_2], frac_read_index_LFO_2);
+		
+	}
+
+	// add increment 
+	read_index_LFO_1 += inc_LFO_1;
+	read_index_LFO_2 += inc_LFO_2;
+
+	//check the wrap
+	if (read_index_LFO_1 > 1024.0)
+		read_index_LFO_1 = read_index_LFO_1 - 1024.0;
+	if (read_index_LFO_2 > 1024.0)
+		read_index_LFO_2 = read_index_LFO_2 - 1024.0;
+
+	//write out 
+	*yn_1 = out_sample_LFO_1;
+	*yn_2 = out_sample_LFO_2;
+}
+
+void PluginCore::do_envelope(EG_possible_states *EG_state, double *envelope_output)
+{
+	//EG_possible_states EG_state;
+	EG_possible_states state;
+	state = *EG_state;
+	double output = *envelope_output;
+	
+	
+
+	//this function will be called once per sample period
+	switch (state)
+	{
+		case EG_possible_states::off:
+		{
+			//output is off
+			output = 0.0;
+			break;
+		}
+		
+		case EG_possible_states::attack:
+		{
+			//render value
+			output = attack_offset + attack_coeff * output;
+
+			//check go to the next state
+			if (output >= 1.0 || attack_time_ms <= 0.0) 
+			{
+				output = 1.0;
+				state = EG_possible_states::decay;
+				break;
+			}
+			break;
+		}
+
+		case EG_possible_states::decay:
+		{
+			//render value
+			output = decay_offset + decay_coeff * output;
+
+			//check go to the next state
+			if (output <= sustain_level || decay_time_ms <= 0.0)
+			{
+				output = sustain_level;
+				state = EG_possible_states::sustain;
+				break;
+			}
+			break;
+		}
+
+		case EG_possible_states::sustain:
+		{
+			//render value
+			output = sustain_level;
+			break;
+		}
+
+		case EG_possible_states::release:
+		{
+			//render value
+			output = release_offset + release_coeff * output;
+
+			//check go to the next state
+			if (output <= 0.0 || release_time_ms <= 0.0)
+			{
+				output = 0.0;
+				state = EG_possible_states::off;
+				break;
+			}
+			break;
+		}
+
+
+
+	}
+
+	*EG_state = state;
+	*envelope_output = output;
+
+}
+
+void PluginCore::init_envelope(void)
+{
+	//setting times to default
+	attack_time_ms = attack_gui*EG_default_time;
+	decay_time_ms = decay_gui*EG_default_time;
+	release_time_ms = release_gui*EG_default_time;
+	sustain_level = sustain_gui;
+	envelope_output_osc_1 = 0.0;
+	envelope_output_osc_2 = 0.0;
+
+	//states 
+	EG_state_osc_1 = EG_possible_states::off;
+	EG_state_osc_2 = EG_possible_states::off;
+	EG_mode = EG_possible_modes::analog;
+	set_EG_mode();
+
+	//flags 
+	note_on_osc_1 = false;
+	note_on_osc_2 = false;
+	ringing_osc_1 = false;
+	ringing_osc_2 = false;
+
+
+}
+
+void PluginCore::set_EG_mode(void)
+{	
+
+	if (EG_mode == EG_possible_modes::analog)
+	{
+		attack_TCO = exp(-1.5);
+		decay_TCO = exp(-4.95);
+		release_TCO = decay_TCO;
+	}
+	else
+	{
+		//digital is linear-in-dB
+		attack_TCO = 0.99999;
+		decay_TCO = exp(-11.05);
+		release_TCO = decay_TCO;
+	}
+
+	//recalc these 
+	calculate_attack_time();
+	calculate_decay_time();
+	calculate_release_time();
+
+}
+
+void PluginCore::calculate_attack_time(void) 
+{
+	//samples for the exponential rate
+	double samples = getSampleRate() * ((attack_time_ms) / 1000.0);
+
+	//coeff and base for iterative exponential calculation
+	attack_coeff = exp(-log((1.0 + attack_TCO) / attack_TCO) / samples);
+
+	attack_offset = (1.0 + attack_TCO) * (1.0 - attack_coeff);
+}
+
+void PluginCore::calculate_decay_time(void)
+{
+	//samples for the exponential rate
+	double samples = getSampleRate() * ((decay_time_ms) / 1000.0);
+
+	//coeff and base for iterative exponential calculation
+	decay_coeff = exp(-log((1.0 + decay_TCO) / decay_TCO) / samples);
+
+	decay_offset = (sustain_level - decay_TCO) * (1.0 - decay_coeff);
+}
+
+void PluginCore::calculate_release_time(void)
+{
+	//samples for the exponential rate 
+	double samples = getSampleRate() * ((release_time_ms) / 1000.0);
+
+	//coeff and base for iterative exponential calculation
+	release_coeff = exp(-log((1.0 + release_TCO) / release_TCO) / samples);
+
+	release_offset = -release_TCO * (1.0 - release_coeff);
+}

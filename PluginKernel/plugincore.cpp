@@ -185,6 +185,46 @@ bool PluginCore::initPluginParameters()
 	piParam->setBoundVariable(&volume_osc_2_gui, boundVariableType::kDouble);
 	addPluginParameter(piParam);
 
+	// --- continuous control: Attack
+	piParam = new PluginParameter(controlID::attack_gui, "Attack", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.500000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&attack_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Decay
+	piParam = new PluginParameter(controlID::decay_gui, "Decay", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.500000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&decay_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Sustain
+	piParam = new PluginParameter(controlID::sustain_gui, "Sustain", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.500000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&sustain_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Release
+	piParam = new PluginParameter(controlID::release_gui, "Release", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.500000, taper::kLinearTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&release_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
+	// --- meter control: MASTEROUT
+	piParam = new PluginParameter(controlID::master_meter, "MASTEROUT", 10.00, 100.00, ENVELOPE_DETECT_MODE_RMS, meterCal::kLogMeter);
+	piParam->setBoundVariable(&master_meter, boundVariableType::kFloat);
+	addPluginParameter(piParam);
+
+	// --- continuous control: Master Volume
+	piParam = new PluginParameter(controlID::master_volume_gui, "Master Volume", "", controlVariableType::kDouble, 0.000000, 1.000000, 0.707000, taper::kAntiLogTaper);
+	piParam->setParameterSmoothing(true);
+	piParam->setSmoothingTimeMsec(20.00);
+	piParam->setBoundVariable(&master_volume_gui, boundVariableType::kDouble);
+	addPluginParameter(piParam);
+
 	// --- Aux Attributes
 	AuxParameterAttribute auxAttribute;
 
@@ -246,12 +286,12 @@ bool PluginCore::initPluginParameters()
 
 	// --- controlID::frequency_LFO_1_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(2147483680);
+	auxAttribute.setUintAttribute(2147483702);
 	setParamAuxAttribute(controlID::frequency_LFO_1_gui, auxAttribute);
 
 	// --- controlID::frequency_LFO_2_gui
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
-	auxAttribute.setUintAttribute(2147483680);
+	auxAttribute.setUintAttribute(2147483702);
 	setParamAuxAttribute(controlID::frequency_LFO_2_gui, auxAttribute);
 
 	// --- controlID::gain_control_filter_gui
@@ -278,6 +318,36 @@ bool PluginCore::initPluginParameters()
 	auxAttribute.reset(auxGUIIdentifier::guiControlData);
 	auxAttribute.setUintAttribute(2147483703);
 	setParamAuxAttribute(controlID::volume_osc_2_gui, auxAttribute);
+
+	// --- controlID::attack_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483703);
+	setParamAuxAttribute(controlID::attack_gui, auxAttribute);
+
+	// --- controlID::decay_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483703);
+	setParamAuxAttribute(controlID::decay_gui, auxAttribute);
+
+	// --- controlID::sustain_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483703);
+	setParamAuxAttribute(controlID::sustain_gui, auxAttribute);
+
+	// --- controlID::release_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483703);
+	setParamAuxAttribute(controlID::release_gui, auxAttribute);
+
+	// --- controlID::master_meter
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(134217728);
+	setParamAuxAttribute(controlID::master_meter, auxAttribute);
+
+	// --- controlID::master_volume_gui
+	auxAttribute.reset(auxGUIIdentifier::guiControlData);
+	auxAttribute.setUintAttribute(2147483703);
+	setParamAuxAttribute(controlID::master_volume_gui, auxAttribute);
 
 
 	// **--0xEDA5--**
@@ -682,7 +752,7 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 		z1_x_COF_control_filter = xn_COF_control_filter;
 		z1_y_COF_control_filter = yn_COF_control_filter;
 
-		final_out_sample = yn_COF_control_filter;
+		final_out_sample = master_volume_gui * yn_COF_control_filter;
 
 		
 
@@ -693,6 +763,9 @@ bool PluginCore::processAudioFrame(ProcessFrameInfo& processFrameInfo)
 		processFrameInfo.audioOutputFrame[0] = final_out_sample;
 		if (processFrameInfo.channelIOConfig.outputChannelFormat == kCFStereo)
 			processFrameInfo.audioOutputFrame[1] = final_out_sample;
+
+		//UV meter
+		master_meter = final_out_sample;
 
 		return true;	/// processed
 
@@ -893,7 +966,34 @@ bool PluginCore::postUpdatePluginParameter(int32_t controlID, double controlValu
 			a0_gain_control_filter = gain_control_filter_gui;
 			break;
 		}
+		
+		
+		case 46:
+		{
+			attack_time_ms = attack_gui * EG_default_time;
+			calculate_attack_time();
+			break;
+		}
 
+		case 47:
+		{
+			decay_time_ms = decay_gui * EG_default_time;
+			calculate_decay_time();
+			break;
+		}
+
+		case 48:
+		{
+			sustain_level = sustain_gui;
+			break;
+		}
+
+		case 49:
+		{
+			release_time_ms = release_gui * EG_default_time;
+			calculate_release_time();
+			break;
+		}
 		case 51:
 		{	
 			fc_COF_control_filter = COF_control_filter_gui;
@@ -1058,7 +1158,7 @@ bool PluginCore::initPluginPresets()
 	// --- Preset: Factory Preset
 	preset = new PresetInfo(index++, "Factory Preset");
 	initPresetParameters(preset->presetParameters);
-	setPresetParameter(preset->presetParameters, controlID::volume_osc_1_gui, 0.500000);
+	setPresetParameter(preset->presetParameters, controlID::volume_osc_1_gui, 0.707000);
 	setPresetParameter(preset->presetParameters, controlID::frequency_osc_1_gui, 440.000000);
 	setPresetParameter(preset->presetParameters, controlID::start_osc_1_gui, -0.000000);
 	setPresetParameter(preset->presetParameters, controlID::osc_1_type_gui, -0.000000);
@@ -1075,7 +1175,12 @@ bool PluginCore::initPluginPresets()
 	setPresetParameter(preset->presetParameters, controlID::COF_control_filter_gui, 440.000000);
 	setPresetParameter(preset->presetParameters, controlID::LFO_1_control_gui, -0.000000);
 	setPresetParameter(preset->presetParameters, controlID::LFO_2_control_gui, -0.000000);
-	setPresetParameter(preset->presetParameters, controlID::volume_osc_2_gui, 0.000000);
+	setPresetParameter(preset->presetParameters, controlID::volume_osc_2_gui, 0.707000);
+	setPresetParameter(preset->presetParameters, controlID::attack_gui, 0.500000);
+	setPresetParameter(preset->presetParameters, controlID::decay_gui, 0.500000);
+	setPresetParameter(preset->presetParameters, controlID::sustain_gui, 0.500000);
+	setPresetParameter(preset->presetParameters, controlID::release_gui, 0.500000);
+	setPresetParameter(preset->presetParameters, controlID::master_volume_gui, 0.707000);
 	addPreset(preset);
 
 
@@ -1112,6 +1217,7 @@ bool PluginCore::initPluginDescriptors()
 
     // --- AU
     apiSpecificInfo.auBundleID = kAUBundleID;
+	apiSpecificInfo.auBundleName = kAUBundleName;
 	apiSpecificInfo.auBundleName = kAUBundleName;
 	apiSpecificInfo.auBundleName = kAUBundleName;
 	apiSpecificInfo.auBundleName = kAUBundleName;
@@ -1413,10 +1519,10 @@ void PluginCore::do_envelope(EG_possible_states *EG_state, double *envelope_outp
 void PluginCore::init_envelope(void)
 {
 	//setting times to default
-	attack_time_ms = EG_default_time;
-	decay_time_ms = EG_default_time;
-	release_time_ms = EG_default_time;
-	sustain_level = 0.8;
+	attack_time_ms = attack_gui*EG_default_time;
+	decay_time_ms = decay_gui*EG_default_time;
+	release_time_ms = release_gui*EG_default_time;
+	sustain_level = sustain_gui;
 	envelope_output_osc_1 = 0.0;
 	envelope_output_osc_2 = 0.0;
 
